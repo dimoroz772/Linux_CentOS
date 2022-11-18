@@ -4,3 +4,5 @@ Cheats for OS CentOS
 --------------------------------------------------------------------------------------------------------------
 rsyslog+LogAnalyzer+MySQL: https://github.com/dimoroz772/Linux_CentOS/blob/main/rsyslog%2BLogAnalyzer%2BMySQL
 --------------------------------------------------------------------------------------------------------------
+Docker+Portainer https://github.com/dimoroz772/Linux_CentOS/blob/main/Docker%2BPortainer
+--------------------------------------------------------------------------------------------------------------
