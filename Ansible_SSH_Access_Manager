@@ -468,7 +468,7 @@ Ansible работает с помощью playbook-ов, написанием �
 
   - name: Creating a user in the "Users" group
     user:
-      name: dsmorozov
+      name: Larry
       password: 123456789
       shell: /bin/bash
       groups: users
@@ -476,14 +476,14 @@ Ansible работает с помощью playbook-ов, написанием �
 
   - name: Creating a ssh key
     user:
-      name: dsmorozov
+      name: Larry
       generate_ssh_key: yes
       ssh_key_bits: 2048
       ssh_key_file: /root/.ssh/id_rsa
 
   - name: Copying the ssh key to the user directory
     authorized_key:
-      user: dsmorozov
+      user: Larry
       state: present
       key: "{{ lookup('file', '/root/.ssh/id_rsa.pub') }}"
 ...
@@ -524,9 +524,38 @@ ansible_ssh_private_key_file=/root/.ssh/root |#|#| Путь к закрытом�
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 Чтобы проверить работоспособность ssh-подключения через файл hosts, нужно выполнить следующую команду:
 ansible -i /etc/ansible/hosts -m ping all |#|#| Команда для проверки работоспособности ssh-подключения
+------------
+Результат успеха:
+------------
+[root@server-ansible ~]# ansible -i /etc/ansible/hosts -m ping all
+[DEPRECATION WARNING]: Distribution fedora 37 on host 10.10.10.10 should use /usr/bin/python3, but is using /usr/bin/python for backward compatibility with prior Ansible releases. A future Ansible release will default to using the 
+discovered platform python for this host. See https://docs.ansible.com/ansible/2.9/reference_appendices/interpreter_discovery.html for more information. This feature will be removed in version 2.12. Deprecation warnings can be disabled 
+by setting deprecation_warnings=False in ansible.cfg.
+10.10.10.10 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    }, 
+    "changed": false, 
+    "ping": "pong"
+}
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 7) Тестирование playbook-ов.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ВНИМАНИЕ!!! ПЕРЕД ЗАПУСКОМ ПЛЕЙБУКА, ОБЯЗАТЕЛЬНО СГЕНЕРИРУЙТЕ НОВЫЕ КЛЮЧИ ДЛЯ НОВОГО ПОЛЬЗОВАТЕЛЯ!!!
+Для запуска плейбука выполните следующую команду:
+------------
+ansible-playbook admadd.yml -i hosts |#|#| Команда для запуска плейбука "admadd.yml"(который находится в каталоге "/etc/ansible/") на тех серверах, которые 
+прописаны в файле "hosts"(в нашем случае 10.10.10.10).
+
+
+
+
+
+
+
+
+
+
 
 
 
