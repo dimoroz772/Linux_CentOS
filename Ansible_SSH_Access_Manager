@@ -5,6 +5,9 @@
 Всем привет! Для реализации данного проекта мне потребовалось:
 1) Обновить пакеты ОС Linux CentOS 7 до последней версии;
 2) Прописать статические IP-адреса;
+------------------------------------------------------------
+По аналогии с пунктом 1 и 2, настроить VM(Client)
+------------------------------------------------------------
 3) Установить необходимые пакеты/компоненты;
 4) Сгенерировать ssh-ключи для пользователей;
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -73,18 +76,337 @@ ls |#|#| Команда для просмотра содержимого в ка
 Ключ id_rsa.pub является открытым/публичным, его нужно будет положить на клиентскую ВМ в каталог "/root/.ssh" с названием "authorized_keys".
 Для копирования ключа, используем команду "ssh-copy-id".
 ------------
-ssh-copy-id -i ~/.ssh/id_rsa.pub root@10.10.10.10 |#|#| Команда для копирования ssh-ключа на нужную ВМ.
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@10.10.10.10 |#|#| Команда для копирования ssh-ключа "id_rsa.pub" на VM(Client) с IP-адресом: 10.10.10.10
+Теперь можно зайти на VB с IP-адресом 10.10.10.10, в каталог "/root/.ssh/" и увидеть, что в нём находится файл с названием "authorized_keys", внутри которого
+находится содержимое ключа "id_rsa.pub".
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+После того, как ключ был скопирован на VM(Client), нужно поменять содержимое конфигурационного файла "sshd_config".
+------------
+ssh root@10.10.10.10 |#|#| Команда для подключения к VM(Client)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+nano /etc/ssh/sshd_config |#|#| Команда для открытия конфигурационного файла "sshd_config"
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+Файл sshd_config нужно привести к следующему виду:
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+#	$OpenBSD: sshd_config,v 1.100 2016/08/15 12:32:04 naddy Exp $
 
+# This is the sshd server system-wide configuration file.  See
+# sshd_config(5) for more information.
 
+# This sshd was compiled with PATH=/usr/local/bin:/usr/bin
 
+# The strategy used for options in the default sshd_config shipped with
+# OpenSSH is to specify options with their default value where
+# possible, but leave them commented.  Uncommented options override the
+# default value.
 
+# If you want to change the port on a SELinux system, you have to tell
+# SELinux about this change.
+# semanage port -a -t ssh_port_t -p tcp #PORTNUMBER
+#
+#Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
 
+HostKey /etc/ssh/ssh_host_rsa_key
+#HostKey /etc/ssh/ssh_host_dsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
 
+# Ciphers and keying
+#RekeyLimit default none
 
+# Logging
+#SyslogFacility AUTH
+SyslogFacility AUTHPRIV
+#LogLevel INFO
 
+# Authentication:
 
+#LoginGraceTime 2m
+PermitRootLogin yes
+#StrictModes yes
+#MaxAuthTries 6
+#MaxSessions 10
 
+PubkeyAuthentication yes
 
+# The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2
+# but this is overridden so installations will only check .ssh/authorized_keys
+AuthorizedKeysFile	.ssh/authorized_keys
+
+#AuthorizedPrincipalsFile none
+
+#AuthorizedKeysCommand none
+#AuthorizedKeysCommandUser nobody
+
+# For this to work you will also need host keys in /etc/ssh/ssh_known_hosts
+#HostbasedAuthentication no
+# Change to yes if you don't trust ~/.ssh/known_hosts for
+# HostbasedAuthentication
+#IgnoreUserKnownHosts no
+# Don't read the user's ~/.rhosts and ~/.shosts files
+#IgnoreRhosts yes
+
+# To disable tunneled clear text passwords, change to no here!
+#PasswordAuthentication yes
+#PermitEmptyPasswords no
+PasswordAuthentication yes
+
+# Change to no to disable s/key passwords
+#ChallengeResponseAuthentication yes
+ChallengeResponseAuthentication no
+
+# Kerberos options
+#KerberosAuthentication no
+#KerberosOrLocalPasswd yes
+#KerberosTicketCleanup yes
+#KerberosGetAFSToken no
+#KerberosUseKuserok yes
+
+# GSSAPI options
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials no
+#GSSAPIStrictAcceptorCheck yes
+#GSSAPIKeyExchange no
+#GSSAPIEnablek5users no
+
+# Set this to 'yes' to enable PAM authentication, account processing,
+# and session processing. If this is enabled, PAM authentication will
+# be allowed through the ChallengeResponseAuthentication and
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication via ChallengeResponseAuthentication may bypass
+# the setting of "PermitRootLogin without-password".
+# If you just want the PAM account and session checks to run without
+# PAM authentication, then enable this but set PasswordAuthentication
+# and ChallengeResponseAuthentication to 'no'.
+# WARNING: 'UsePAM no' is not supported in Red Hat Enterprise Linux and may cause several
+# problems.
+UsePAM yes
+
+#AllowAgentForwarding yes
+#AllowTcpForwarding yes
+#GatewayPorts no
+X11Forwarding yes
+#X11DisplayOffset 10
+#X11UseLocalhost yes
+#PermitTTY yes
+#PrintMotd yes
+#PrintLastLog yes
+#TCPKeepAlive yes
+#UseLogin no
+#UsePrivilegeSeparation sandbox
+#PermitUserEnvironment no
+#Compression delayed
+#ClientAliveInterval 0
+#ClientAliveCountMax 3
+#ShowPatchLevel no
+#UseDNS yes
+#PidFile /var/run/sshd.pid
+#MaxStartups 10:30:100
+#PermitTunnel no
+#ChrootDirectory none
+#VersionAddendum none
+
+# no default banner path
+#Banner none
+
+# Accept locale-related environment variables
+AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+AcceptEnv XMODIFIERS
+
+# override default of no subsystems
+Subsystem	sftp    /usr/libexec/openssh/sftp-server
+
+# Example of overriding settings on a per-user basis
+#Match User anoncvs
+#	X11Forwarding no
+#	AllowTcpForwarding no
+#	PermitTTY no
+#	ForceCommand cvs server
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+В нем лишь нужно заменить строку "PubkeyAuthentication no" на "PubkeyAuthentication yes" (при необходимости раскомментируйте строку).
+После внесения изменений, сохраняем файл и перезагружаем службу ssh.
+------------
+systemctl restart sshd |#|#| Команда для перезапуска службы ssh
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+После внесения всех изменений, возвращаемся обратно на сервер Ansible, и пытаемся подключиться к VM(Client) через закрытый ключ(id_rsa). В моем случае, все
+ключ остались на местах т.е. в каталоге "/root/.ssh/"
+------------
+ssh -i /root/.ssh/id_rsa root@10.10.10.10 |#|#| Команда для входа на VM(Client) с помощью закрытого ключа
+------------
+Если все сделали правильно, то после выполнения команды, вы должны подключиться на VM(Client)
+------------
+[root@fedora dimoroz772]# ssh -i /root/.ssh/id_rsa root@10.10.10.10
+Last login: Fri Jan 13 13:23:04 2023 from 10.10.10.11   |#|#| Пример успешного
+[root@VM(Client) ~]#                                    |#|#|                   подключения к VM(Client) (10.10.10.11 - Адрес сервера Ansible).
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+После успешного подключения к VM(Client), можно выключить вход по паролю. Для этого нужно подключиться к клиенту VM(Client), и в конфигурационном 
+файле "ssh_config" поменять значение строки "PasswordAuthentication no" на "PasswordAuthentication yes" (при необходимости раскомментируйте строку). Пример 
+конфигурационного файла прикладываю ниже:
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+#	$OpenBSD: sshd_config,v 1.100 2016/08/15 12:32:04 naddy Exp $
+
+# This is the sshd server system-wide configuration file.  See
+# sshd_config(5) for more information.
+
+# This sshd was compiled with PATH=/usr/local/bin:/usr/bin
+
+# The strategy used for options in the default sshd_config shipped with
+# OpenSSH is to specify options with their default value where
+# possible, but leave them commented.  Uncommented options override the
+# default value.
+
+# If you want to change the port on a SELinux system, you have to tell
+# SELinux about this change.
+# semanage port -a -t ssh_port_t -p tcp #PORTNUMBER
+#
+#Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+
+HostKey /etc/ssh/ssh_host_rsa_key
+#HostKey /etc/ssh/ssh_host_dsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Ciphers and keying
+#RekeyLimit default none
+
+# Logging
+#SyslogFacility AUTH
+SyslogFacility AUTHPRIV
+#LogLevel INFO
+
+# Authentication:
+
+#LoginGraceTime 2m
+PermitRootLogin yes
+#StrictModes yes
+#MaxAuthTries 6
+#MaxSessions 10
+
+PubkeyAuthentication yes
+
+# The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2
+# but this is overridden so installations will only check .ssh/authorized_keys
+AuthorizedKeysFile	.ssh/authorized_keys
+
+#AuthorizedPrincipalsFile none
+
+#AuthorizedKeysCommand none
+#AuthorizedKeysCommandUser nobody
+
+# For this to work you will also need host keys in /etc/ssh/ssh_known_hosts
+#HostbasedAuthentication no
+# Change to yes if you don't trust ~/.ssh/known_hosts for
+# HostbasedAuthentication
+#IgnoreUserKnownHosts no
+# Don't read the user's ~/.rhosts and ~/.shosts files
+#IgnoreRhosts yes
+
+# To disable tunneled clear text passwords, change to no here!
+#PasswordAuthentication yes
+#PermitEmptyPasswords no
+PasswordAuthentication no
+
+# Change to no to disable s/key passwords
+#ChallengeResponseAuthentication yes
+ChallengeResponseAuthentication no
+
+# Kerberos options
+#KerberosAuthentication no
+#KerberosOrLocalPasswd yes
+#KerberosTicketCleanup yes
+#KerberosGetAFSToken no
+#KerberosUseKuserok yes
+
+# GSSAPI options
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials no
+#GSSAPIStrictAcceptorCheck yes
+#GSSAPIKeyExchange no
+#GSSAPIEnablek5users no
+
+# Set this to 'yes' to enable PAM authentication, account processing,
+# and session processing. If this is enabled, PAM authentication will
+# be allowed through the ChallengeResponseAuthentication and
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication via ChallengeResponseAuthentication may bypass
+# the setting of "PermitRootLogin without-password".
+# If you just want the PAM account and session checks to run without
+# PAM authentication, then enable this but set PasswordAuthentication
+# and ChallengeResponseAuthentication to 'no'.
+# WARNING: 'UsePAM no' is not supported in Red Hat Enterprise Linux and may cause several
+# problems.
+UsePAM yes
+
+#AllowAgentForwarding yes
+#AllowTcpForwarding yes
+#GatewayPorts no
+X11Forwarding yes
+#X11DisplayOffset 10
+#X11UseLocalhost yes
+#PermitTTY yes
+#PrintMotd yes
+#PrintLastLog yes
+#TCPKeepAlive yes
+#UseLogin no
+#UsePrivilegeSeparation sandbox
+#PermitUserEnvironment no
+#Compression delayed
+#ClientAliveInterval 0
+#ClientAliveCountMax 3
+#ShowPatchLevel no
+#UseDNS yes
+#PidFile /var/run/sshd.pid
+#MaxStartups 10:30:100
+#PermitTunnel no
+#ChrootDirectory none
+#VersionAddendum none
+
+# no default banner path
+#Banner none
+
+# Accept locale-related environment variables
+AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+AcceptEnv XMODIFIERS
+
+# override default of no subsystems
+Subsystem	sftp    /usr/libexec/openssh/sftp-server
+
+# Example of overriding settings on a per-user basis
+#Match User anoncvs
+#	X11Forwarding no
+#	AllowTcpForwarding no
+#	PermitTTY no
+#	ForceCommand cvs server
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+После внесения измений, сохрание конфигурационный файл и перезагрузите службу ssh.
+------------
+systemctl restart sshd |#|#| Команда для перезапуска службы ssh
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+После всех выполненных действий, вернитесь на сервер Ansible и попробуйте подключиться к VM(Client) по паролю без ssh-ключа. Вас должна ждать неудача. Пример
+показан ниже:
+------------
+[root@fedora dimoroz772]# ssh root@10.10.10.10
+root@10.10.10.10: Permission denied (publickey,gssapi-keyex,gssapi-with-mic).
+[root@fedora dimoroz772]#
+------------
+Как видим, нам отказано в доступе.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+А подключение с помощью приватного ssh-ключа дает успех:
+------------
+[root@fedora dimoroz772]# ssh -i /root/.ssh/id_rsa root@10.10.10.10
+Last login: Fri Jan 13 13:23:04 2023 from 10.10.10.11
+[root@VM(Client) ~]#
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
