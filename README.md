@@ -1,6 +1,6 @@
  <br/>
 <p align="center">
-<img src="./centos-linux.png" width="250" height="150"/>
+<img src="./centos-linux.png" width="450" height="150"/>
 </p><br/>
 <h1 align="Center"><i>Linux CentOS</i></h1>
  <br/>
