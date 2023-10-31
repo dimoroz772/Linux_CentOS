@@ -1,0 +1,863 @@
+<head>
+  <title>Ansible_SSH_Access_Manager</title>
+  <link rel="shortcut icon" href="./CentOS_Logo.png" type="image/png">
+</head>
+ <head>
+  <meta charset="utf-8">
+ </head>
+<style>
+body{
+    background-image: url('Fon_CentOS.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    color: #333;
+}
+a {
+    text-decoration: none;
+}
+p {
+  text-indent: 1.5em;
+  text-align: justify;
+}
+</style>
+<style> 
+  table{
+  border: 1px black solid;
+  }
+  th, td {
+    border: 1px solid grey; /*  бахнуть на rgba(255,255,0,0); */
+  }
+</style>
+  
+<br/>
+<p align="center">
+<Center>
+<img src="./centos-linux.png" width="450" height="150"/>
+</Center>
+</p><br/>
+ <br/>
+ <br/>
+
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Всем привет! В данном посте рассматривается установка и настройка сервера <i style="color:rgb(255, 0, 0)">Ansible SSH Access Manager</i> развернутого на ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i>.</p></i></h3>
+<h2><i style="color:rgb(255, 0, 0)"><p align="Center">Все описанные ниже действия в командной строке выполнялись под пользователем root.</p></i></h2>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для реализации данного проекта мне потребовалось:</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Обновить пакеты ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i> до последней версии</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Прописать статические <i style="color:rgb(255, 0, 0)">IP</i>-адреса</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><i style="color:rgb(255, 0, 0)">!!!</i> По аналогии с пунктом <i style="color:rgb(255, 0, 0)">1</i> и <i style="color:rgb(255, 0, 0)">2</i>, настроить <i style="color:rgb(255, 0, 0)">VM(Client) !!!</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Установить необходимые пакеты/компоненты</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Сгенерировать <i style="color:rgb(255, 0, 0)">ssh</i>-ключи для пользователей и пример их использования</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Написание <i style="color:rgb(255, 0, 0)">Playbook</i>-ов</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">6) Редактирование файла <i style="color:rgb(255, 0, 0)">Hosts</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">7) Тестирование <i style="color:rgb(255, 0, 0)">Playbook</i>-ов</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Предисловие:</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Ansible</b> — это система управления конфигурациями, написанная на языке программирования <i style="color:rgb(255, 0, 0)">Python</i>, с использованием декларативного языка разметки для описания конфигураций. Применяется для автоматизации настройки и развёртывания программного обеспечения.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>SSH</b> — это сетевой протокол прикладного уровня, позволяющий производить удалённое управление операционной системой и туннелирование <i style="color:rgb(255, 0, 0)">TCP</i>-соединений.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Nano</b> — это консольный текстовый редактор для <i style="color:rgb(255, 0, 0)">UNIX</i> и <i style="color:rgb(255, 0, 0)">Unix</i>-подобных операционных систем, основанный на библиотеке <i style="color:rgb(255, 0, 0)">curses</i> и распространяемый под лицензией <i style="color:rgb(255, 0, 0)">GNU GPL</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>NMTUI</b> — это инструмент командной строки, который используется для настройки сети в системах <i style="color:rgb(255, 0, 0)">Gnu/Linux</i>. При запуске он вызывает графический текстовый интерфейс, который помогает пользователям легко и эффективно настраивать сетевые интерфейсы.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Ключ SSH</b> — это криптографический безопасный идентификатор.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Playbook</b> — это простой, целостный и воспроизводимый способ определить все действия, которые нужно автоматизировать.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>EPEL (Extra Packages for Enterprise Linux)</b> — это открытое бесплатное хранилище пакетов от <i style="color:rgb(255, 0, 0)">Fedora</i>. Оно содержит пакеты дополнительного программного обеспечения для <i style="color:rgb(255, 0, 0)">Linux</i>. Пакеты этого репозитория не конфликтуют с пакетами <i style="color:rgb(255, 0, 0)">RHEL</i>, поэтому этот репозиторий самый безопасный в использовании для <i style="color:rgb(255, 0, 0)">CentOS</i>.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Перед началом выполнения каких-либо манипуляций, нужно выполнить подготовку ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i>. Для начала обновим пакеты системы.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y && yum upgrade -y</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Поиск и обновление пакетов системы.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Также для избежания потери связи с <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, нужно позаботиться о статической <i style="color:rgb(255, 0, 0)">IP</i>-адресации. Её можно настроить как на самой <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, так и на самом сетевом устройстве. Статическую адресацию можно прописать с помощью инструмента командной строки <i style="color:rgb(255, 0, 0)">nmtui</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y NetworkManager-tui</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка пакета <i style="color:rgb(255, 0, 0)">nmtui</i> для настройки сети на <i style="color:rgb(255, 0, 0)">АРМ/VM</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Гайд по тому, как пользоваться инструментом <i style="color:rgb(255, 0, 0)">nmtui</i>, вы можете посмотреть в интернете.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Установка необходимых пакетов/компонентов.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y epel-release</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для подключения репозитория <i style="color:rgb(255, 0, 0)">EPEL</i> к OC.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y ansible</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки ПО <i style="color:rgb(255, 0, 0)">Ansible</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cp /etc/ansible/hosts /etc/ansible/hosts.default</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для копирования файла <i style="color:rgb(255, 0, 0)">hosts</i> с новым именем <i style="color:rgb(255, 0, 0)">hosts.default</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После создания копии файла <i style="color:rgb(255, 0, 0)">hosts</i>, можете его полностью очистить, чтобы было удобнее в нем работать.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Генерация <i style="color:rgb(255, 0, 0)">ssh</i>-ключей для пользователей и их использование.</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Для того, чтобы пользоваться ПО <i style="color:rgb(255, 0, 0)">Ansible</i>, нужно обеспечить связь между самим сервером <i style="color:rgb(255, 0, 0)">Ansible</i> и клиентом. Для этого нужно создать <i style="color:rgb(255, 0, 0)">ssh</i>-ключи для пользователя <i style="color:rgb(255, 0, 0)">root</i>. Я буду использовать в данном примере <i style="color:rgb(255, 0, 0)">ssh</i>-ключи формата <i style="color:rgb(255, 0, 0)">RSA</i>, но можно создать и таких форматов как:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        - dsa<br/>
+        - ecdsa<br/>
+        - ecdsa-sk<br/>
+        - ed25519<br/>
+        - ed25519-sk</i></th>
+      </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ssh-keygen -t rsa</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для генерации <i style="color:rgb(255, 0, 0)">ssh</i>-ключей формата <i style="color:rgb(255, 0, 0)">RSA</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">При генерации ключей с помощью компонента <i style="color:rgb(255, 0, 0)">ssh-keygen</i>, также можно будет задать пути сохраниния создаваемых ключей и назначить парольную фразу, которую нужно будет вводить для использования данного ключа. После выполнения данной команды, ключи <i style="color:rgb(255, 0, 0)">id_rsa</i> и <i style="color:rgb(255, 0, 0)">id_rsa.pub</i> можно будет найти по пути: <i style="color:rgb(255, 0, 0)">/root/.ssh/id_rsa</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После того, как ssh-ключи были сгенерированы, их нужно разложить по местам.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Открытый (публичный ключ <i style="color:rgb(255, 0, 0)">id_rsa.pub</i>)</b> — используется для шифрования данных при обращении к серверу, находится у клиента(в нашем случае при обращении сервера <i style="color:rgb(255, 0, 0)">Ansible</i> к клиенту).</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Закрытый (секретный ключ <i style="color:rgb(255, 0, 0)">id_rsa</i>)</b> — используется для расшифровки данных, он находится у того, кто будет подключаться к серверу(в нашем случае на сервере <i style="color:rgb(255, 0, 0)">Ansible</i>).</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cd /root/.ssh</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перехода в каталог <i style="color:rgb(255, 0, 0)">/root/.ssh</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ls</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для просмотра содержимого в каталоге <i style="color:rgb(255, 0, 0)">/root/.ssh</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Ключ <i style="color:rgb(255, 0, 0)">id_rsa</i></b> является закрытым, он должен храниться у владельца, в нашем случае он будет лежать на сервере <i style="color:rgb(255, 0, 0)">Ansible</i>. Для удобства, его можно переместить в любое удобное место на сервере.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Ключ <i style="color:rgb(255, 0, 0)">id_rsa.pub</i></b> является открытым/публичным, его нужно будет положить на клиентскую <i style="color:rgb(255, 0, 0)">ВМ(VM(Client))</i> в каталог <i style="color:rgb(255, 0, 0)">/root/.ssh</i> с названием <i style="color:rgb(255, 0, 0)">authorized_keys</i>. Для копирования публичного ключа, используем команду <i style="color:rgb(255, 0, 0)">ssh-copy-id</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ssh-copy-id -i /root/.ssh/id_rsa.pub root@10.10.10.10</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для копирования <i style="color:rgb(255, 0, 0)">ssh</i>-ключа <i style="color:rgb(255, 0, 0)">id_rsa.pub</i>, который находится в каталоге <i style="color:rgb(255, 0, 0)">/root/.ssh/</i> на <i style="color:rgb(255, 0, 0)">VM(Client)</i> с <i style="color:rgb(255, 0, 0)">IP</i>-адресом: <i style="color:rgb(255, 0, 0)">10.10.10.10</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Теперь можно зайти на <i style="color:rgb(255, 0, 0)">VM(Client)</i> с <i style="color:rgb(255, 0, 0)">IP</i>-адресом <i style="color:rgb(255, 0, 0)">10.10.10.10</i>, в каталог <i style="color:rgb(255, 0, 0)">/root/.ssh/</i> и увидеть, что в нём находится файл с названием <i style="color:rgb(255, 0, 0)">authorized_keys</i>, внутри которого находится содержимое ключа <i style="color:rgb(255, 0, 0)">id_rsa.pub</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После копирования публичного ключа, создайте папку любую папку в каталоге <i style="color:rgb(255, 0, 0)">/root/.ssh/</i> и положите туда ключи <i style="color:rgb(255, 0, 0)">id_rsa</i> и <i style="color:rgb(255, 0, 0)">id_rsa.pub</i>. Это нужно для того, чтобы не перепутать ключи в дальнейшем, при генерации новых. При необходимости можно переименовать в <i style="color:rgb(255, 0, 0)">root</i> и <i style="color:rgb(255, 0, 0)">root.pub</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После того, как ключ был скопирован на <i style="color:rgb(255, 0, 0)">VM(Client)</i>, нужно поменять содержимое конфигурационного файла <i style="color:rgb(255, 0, 0)">sshd_config</i> на <i style="color:rgb(255, 0, 0)">VM(Client)</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ssh root@10.10.10.10</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для подключения к <i style="color:rgb(255, 0, 0)">VM(Client)</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/ssh/sshd_config</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для открытия конфигурационного файла <i style="color:rgb(255, 0, 0)">sshd_config</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Файл <i style="color:rgb(255, 0, 0)">sshd_config</i> нужно привести к следующему виду:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        #	$OpenBSD: sshd_config,v 1.100 2016/08/15 12:32:04 naddy Exp $<br/>
+        <br/>
+        # This is the sshd server system-wide configuration file.  See<br/>
+        # sshd_config(5) for more information.<br/>
+        <br/>
+        # This sshd was compiled with PATH=/usr/local/bin:/usr/bin<br/>
+        <br/>
+        # The strategy used for options in the default sshd_config shipped with<br/>
+        # OpenSSH is to specify options with their default value where<br/>
+        # possible, but leave them commented.  Uncommented options override the<br/>
+        # default value.<br/>
+        <br/>
+        # If you want to change the port on a SELinux system, you have to tell<br/>
+        # SELinux about this change.<br/>
+        # semanage port -a -t ssh_port_t -p tcp #PORTNUMBER<br/>
+        #<br/>
+        #Port 22<br/>
+        #AddressFamily any<br/>
+        #ListenAddress 0.0.0.0<br/>
+        #ListenAddress ::<br/>
+        <br/>
+        HostKey /etc/ssh/ssh_host_rsa_key<br/>
+        #HostKey /etc/ssh/ssh_host_dsa_key<br/>
+        HostKey /etc/ssh/ssh_host_ecdsa_key<br/>
+        HostKey /etc/ssh/ssh_host_ed25519_key<br/>
+        <br/>
+        # Ciphers and keying<br/>
+        #RekeyLimit default none<br/>
+        <br/>
+        # Logging<br/>
+        #SyslogFacility AUTH<br/>
+        SyslogFacility AUTHPRIV<br/>
+        #LogLevel INFO<br/>
+        <br/>
+        # Authentication:<br/>
+        <br/>
+        #LoginGraceTime 2m<br/>
+        PermitRootLogin yes<br/>
+        #StrictModes yes<br/>
+        #MaxAuthTries 6<br/>
+        #MaxSessions 10<br/>
+        <br/>
+        PubkeyAuthentication yes<br/>
+        <br/>
+        # The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2<br/>
+        # but this is overridden so installations will only check .ssh/authorized_keys<br/>
+        AuthorizedKeysFile	.ssh/authorized_keys<br/>
+        <br/>
+        #AuthorizedPrincipalsFile none<br/>
+        <br/>
+        #AuthorizedKeysCommand none<br/>
+        #AuthorizedKeysCommandUser nobody<br/>
+        <br/>
+        # For this to work you will also need host keys in /etc/ssh/ssh_known_hosts<br/>
+        #HostbasedAuthentication no<br/>
+        # Change to yes if you don't trust ~/.ssh/known_hosts for<br/>
+        # HostbasedAuthentication<br/>
+        #IgnoreUserKnownHosts no<br/>
+        # Don't read the user's ~/.rhosts and ~/.shosts files<br/>
+        #IgnoreRhosts yes<br/>
+        <br/>
+        # To disable tunneled clear text passwords, change to no here!<br/>
+        #PasswordAuthentication yes<br/>
+        #PermitEmptyPasswords no<br/>
+        PasswordAuthentication yes<br/>
+        <br/>
+        # Change to no to disable s/key passwords<br/>
+        #ChallengeResponseAuthentication yes<br/>
+        ChallengeResponseAuthentication no<br/>
+        <br/>
+        # Kerberos options<br/>
+        #KerberosAuthentication no<br/>
+        #KerberosOrLocalPasswd yes<br/>
+        #KerberosTicketCleanup yes<br/>
+        #KerberosGetAFSToken no<br/>
+        #KerberosUseKuserok yes<br/>
+        <br/>
+        # GSSAPI options<br/>
+        GSSAPIAuthentication yes<br/>
+        GSSAPICleanupCredentials no<br/>
+        #GSSAPIStrictAcceptorCheck yes<br/>
+        #GSSAPIKeyExchange no<br/>
+        #GSSAPIEnablek5users no<br/>
+        <br/>
+        # Set this to 'yes' to enable PAM authentication, account processing,<br/>
+        # and session processing. If this is enabled, PAM authentication will<br/>
+        # be allowed through the ChallengeResponseAuthentication and<br/>
+        # PasswordAuthentication.  Depending on your PAM configuration,<br/>
+        # PAM authentication via ChallengeResponseAuthentication may bypass<br/>
+        # the setting of "PermitRootLogin without-password".<br/>
+        # If you just want the PAM account and session checks to run without<br/>
+        # PAM authentication, then enable this but set PasswordAuthentication<br/>
+        # and ChallengeResponseAuthentication to 'no'.<br/>
+        # WARNING: 'UsePAM no' is not supported in Red Hat Enterprise Linux and may cause several<br/>
+        # problems.<br/>
+        UsePAM yes<br/>
+        <br/>
+        #AllowAgentForwarding yes<br/>
+        #AllowTcpForwarding yes<br/>
+        #GatewayPorts no<br/>
+        X11Forwarding yes<br/>
+        #X11DisplayOffset 10<br/>
+        #X11UseLocalhost yes<br/>
+        #PermitTTY yes<br/>
+        #PrintMotd yes<br/>
+        #PrintLastLog yes<br/>
+        #TCPKeepAlive yes<br/>
+        #UseLogin no<br/>
+        #UsePrivilegeSeparation sandbox<br/>
+        #PermitUserEnvironment no<br/>
+        #Compression delayed<br/>
+        #ClientAliveInterval 0<br/>
+        #ClientAliveCountMax 3<br/>
+        #ShowPatchLevel no<br/>
+        #UseDNS yes<br/>
+        #PidFile /var/run/sshd.pid<br/>
+        #MaxStartups 10:30:100<br/>
+        #PermitTunnel no<br/>
+        #ChrootDirectory none<br/>
+        #VersionAddendum none<br/>
+        <br/>
+        # no default banner path<br/>
+        #Banner none<br/>
+        <br/>
+        # Accept locale-related environment variables<br/>
+        AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES<br/>
+        AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT<br/>
+        AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE<br/>
+        AcceptEnv XMODIFIERS<br/>
+        <br/>
+        # override default of no subsystems<br/>
+        Subsystem	sftp    /usr/libexec/openssh/sftp-server<br/>
+        <br/>
+        # Example of overriding settings on a per-user basis<br/>
+        #Match User anoncvs<br/>
+        #	X11Forwarding no<br/>
+        #	AllowTcpForwarding no<br/>
+        #	PermitTTY no<br/>
+        #	ForceCommand cvs server<br/></i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">В нем лишь нужно заменить строку <i style="color:rgb(255, 0, 0)">PubkeyAuthentication no</i> на <i style="color:rgb(255, 0, 0)">PubkeyAuthentication yes</i> (при необходимости раскомментируйте строку).</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После внесения изменений, сохраняем файл и перезагружаем службу <i style="color:rgb(255, 0, 0)">ssh</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl restart sshd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезапуска службы <i style="color:rgb(255, 0, 0)">ssh</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После внесения всех изменений, возвращаемся обратно на сервер <i style="color:rgb(255, 0, 0)">Ansible</i> и пытаемся подключиться к <i style="color:rgb(255, 0, 0)">VM(Client)</i> через закрытый ключ<i style="color:rgb(255, 0, 0)">(root)</i>. В моем случае, все ключи я переместил в каталог <i style="color:rgb(255, 0, 0)">/root/.ssh/keys_root</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Переименовал <i style="color:rgb(255, 0, 0)">"id_rsa"="root"</i> и <i style="color:rgb(255, 0, 0)">"id_rsa.pub"="root.pub"</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mkdir /root/.ssh/keys_root</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания папки <i style="color:rgb(255, 0, 0)">keys_root</i> в каталоге <i style="color:rgb(255, 0, 0)">/root/.ssh/</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mv /root/.ssh/id_rsa /root/.ssh/keys_root/</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перемещения файла <i style="color:rgb(255, 0, 0)">id_rsa</i> в каталог <i style="color:rgb(255, 0, 0)">/root/.ssh/keys_root/</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mv /root/.ssh/id_rsa.pubперемещения файла "id_rsa" в каталог "/root/.ssh/keys_root/" /root/.ssh/keys_root/</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перемещения файла <i style="color:rgb(255, 0, 0)">id_rsa.pub</i> в каталог <i style="color:rgb(255, 0, 0)">/root/.ssh/keys_root/</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mv /root/.ssh/keys_root/id_rsa /root/.ssh/keys_root/root</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для переименования ключа <i style="color:rgb(255, 0, 0)">id_rsa</i> в <i style="color:rgb(255, 0, 0)">root</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mv /root/.ssh/keys_root/id_rsa.pub /root/.ssh/keys_root/root.pub</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для переименования ключа <i style="color:rgb(255, 0, 0)">id_rsa.pub</i> в <i style="color:rgb(255, 0, 0)">root.pub</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ssh -i /root/.ssh/keys_root/root root@10.10.10.10</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для входа на <i style="color:rgb(255, 0, 0)">VM(Client)</i> с помощью закрытого ключа <i style="color:rgb(255, 0, 0)">root</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Если все сделали правильно, то после выполнения команды, вы должны подключиться на <i style="color:rgb(255, 0, 0)">VM(Client)</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Пример успешного подключения к <i style="color:rgb(255, 0, 0)">VM(Client) (10.10.10.11 - Адрес сервера Ansible)</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      [root@server-ansible ~]# ssh -i /root/.ssh/keys_root/root root@10.10.10.10<br/>
+      Last login: Fri Jan 13 13:23:04 2023 from 10.10.10.11<br/>
+      [root@VM(Client) ~]#</i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После успешного подключения к <i style="color:rgb(255, 0, 0)">VM(Client)</i>, можно выключить вход по паролю. Для этого нужно подключиться к клиенту <i style="color:rgb(255, 0, 0)">VM(Client)</i>, и в конфигурационном файле <i style="color:rgb(255, 0, 0)">ssh_config</i> поменять значение строки <i style="color:rgb(255, 0, 0)">PasswordAuthentication no</i> на <i style="color:rgb(255, 0, 0)">PasswordAuthentication yes</i> (при необходимости раскомментируйте строку).</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Пример конфигурационного файла:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        #	$OpenBSD: sshd_config,v 1.100 2016/08/15 12:32:04 naddy Exp $<br/>
+        <br/>
+        # This is the sshd server system-wide configuration file.  See<br/>
+        # sshd_config(5) for more information.<br/>
+        <br/>
+        # This sshd was compiled with PATH=/usr/local/bin:/usr/bin<br/>
+        <br/>
+        # The strategy used for options in the default sshd_config shipped with<br/>
+        # OpenSSH is to specify options with their default value where<br/>
+        # possible, but leave them commented.  Uncommented options override the<br/>
+        # default value.<br/>
+        <br/>
+        # If you want to change the port on a SELinux system, you have to tell<br/>
+        # SELinux about this change.<br/>
+        # semanage port -a -t ssh_port_t -p tcp #PORTNUMBER<br/>
+        #<br/>
+        #Port 22<br/>
+        #AddressFamily any<br/>
+        #ListenAddress 0.0.0.0<br/>
+        #ListenAddress ::<br/>
+        <br/>
+        HostKey /etc/ssh/ssh_host_rsa_key<br/>
+        #HostKey /etc/ssh/ssh_host_dsa_key<br/>
+        HostKey /etc/ssh/ssh_host_ecdsa_key<br/>
+        HostKey /etc/ssh/ssh_host_ed25519_key<br/>
+        <br/>
+        # Ciphers and keying<br/>
+        #RekeyLimit default none<br/>
+        <br/>
+        # Logging<br/>
+        #SyslogFacility AUTH<br/>
+        SyslogFacility AUTHPRIV<br/>
+        #LogLevel INFO<br/>
+        <br/>
+        # Authentication:<br/>
+        <br/>
+        #LoginGraceTime 2m<br/>
+        PermitRootLogin yes<br/>
+        #StrictModes yes<br/>
+        #MaxAuthTries 6<br/>
+        #MaxSessions 10<br/>
+        <br/>
+        PubkeyAuthentication yes<br/>
+        <br/>
+        # The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2<br/>
+        # but this is overridden so installations will only check .ssh/authorized_keys<br/>
+        AuthorizedKeysFile	.ssh/authorized_keys<br/>
+        <br/>
+        #AuthorizedPrincipalsFile none<br/>
+        <br/>
+        #AuthorizedKeysCommand none<br/>
+        #AuthorizedKeysCommandUser nobody<br/>
+        <br/>
+        # For this to work you will also need host keys in /etc/ssh/ssh_known_hosts<br/>
+        #HostbasedAuthentication no<br/>
+        # Change to yes if you don't trust ~/.ssh/known_hosts for<br/>
+        # HostbasedAuthentication<br/>
+        #IgnoreUserKnownHosts no<br/>
+        # Don't read the user's ~/.rhosts and ~/.shosts files<br/>
+        #IgnoreRhosts yes<br/>
+        <br/>
+        # To disable tunneled clear text passwords, change to no here!<br/>
+        #PasswordAuthentication yes<br/>
+        #PermitEmptyPasswords no<br/>
+        PasswordAuthentication no<br/>
+        <br/>
+        # Change to no to disable s/key passwords<br/>
+        #ChallengeResponseAuthentication yes<br/>
+        ChallengeResponseAuthentication no<br/>
+        <br/>
+        # Kerberos options<br/>
+        #KerberosAuthentication no<br/>
+        #KerberosOrLocalPasswd yes<br/>
+        #KerberosTicketCleanup yes<br/>
+        #KerberosGetAFSToken no<br/>
+        #KerberosUseKuserok yes<br/>
+        <br/>
+        # GSSAPI options<br/>
+        GSSAPIAuthentication yes<br/>
+        GSSAPICleanupCredentials no<br/>
+        #GSSAPIStrictAcceptorCheck yes<br/>
+        #GSSAPIKeyExchange no<br/>
+        #GSSAPIEnablek5users no<br/>
+        <br/>
+        # Set this to 'yes' to enable PAM authentication, account processing,<br/>
+        # and session processing. If this is enabled, PAM authentication will<br/>
+        # be allowed through the ChallengeResponseAuthentication and<br/>
+        # PasswordAuthentication.  Depending on your PAM configuration,<br/>
+        # PAM authentication via ChallengeResponseAuthentication may bypass<br/>
+        # the setting of "PermitRootLogin without-password".<br/>
+        # If you just want the PAM account and session checks to run without<br/>
+        # PAM authentication, then enable this but set PasswordAuthentication<br/>
+        # and ChallengeResponseAuthentication to 'no'.<br/>
+        # WARNING: 'UsePAM no' is not supported in Red Hat Enterprise Linux and may cause several<br/>
+        # problems.<br/>
+        UsePAM yes<br/>
+        <br/>
+        #AllowAgentForwarding yes<br/>
+        #AllowTcpForwarding yes<br/>
+        #GatewayPorts no<br/>
+        X11Forwarding yes<br/>
+        #X11DisplayOffset 10<br/>
+        #X11UseLocalhost yes<br/>
+        #PermitTTY yes<br/>
+        #PrintMotd yes<br/>
+        #PrintLastLog yes<br/>
+        #TCPKeepAlive yes<br/>
+        #UseLogin no<br/>
+        #UsePrivilegeSeparation sandbox<br/>
+        #PermitUserEnvironment no<br/>
+        #Compression delayed<br/>
+        #ClientAliveInterval 0<br/>
+        #ClientAliveCountMax 3<br/>
+        #ShowPatchLevel no<br/>
+        #UseDNS yes<br/>
+        #PidFile /var/run/sshd.pid<br/>
+        #MaxStartups 10:30:100<br/>
+        #PermitTunnel no<br/>
+        #ChrootDirectory none<br/>
+        #VersionAddendum none<br/>
+        <br/>
+        # no default banner path<br/>
+        #Banner none<br/>
+        <br/>
+        # Accept locale-related environment variables<br/>
+        AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES<br/>
+        AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT<br/>
+        AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE<br/>
+        AcceptEnv XMODIFIERS<br/>
+        <br/>
+        # override default of no subsystems<br/>
+        Subsystem	sftp    /usr/libexec/openssh/sftp-server<br/>
+        <br/>
+        # Example of overriding settings on a per-user basis<br/>
+        #Match User anoncvs<br/>
+        #	X11Forwarding no<br/>
+        #	AllowTcpForwarding no<br/>
+        #	PermitTTY no<br/>
+        #	ForceCommand cvs server</i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После внесения измений, сохрание конфигурационный файл и перезагрузите службу <i style="color:rgb(255, 0, 0)">ssh</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl restart sshd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезапуска службы <i style="color:rgb(255, 0, 0)">ssh</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После всех выполненных действий, вернитесь на сервер <i style="color:rgb(255, 0, 0)">Ansible</i> и попробуйте подключиться к <i style="color:rgb(255, 0, 0)">VM(Client)</i> по паролю без <i style="color:rgb(255, 0, 0)">ssh</i>-ключа. Вас должна ждать <i style="color:rgb(255, 0, 0)">НЕУДАЧА</i>.</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Пример:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      [root@server-ansible ~]# ssh root@10.10.10.10<br/>
+      root@10.10.10.10: Permission denied (publickey,gssapi-keyex,gssapi-with-mic).<br/>
+      [root@server-ansible ~]#</i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Как видим, нам отказано в доступе.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">А подключение с помощью приватного <i style="color:rgb(255, 0, 0)">ssh</i>-ключа дает успех.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Пример:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      [root@server-ansible ~]# ssh -i /root/.ssh/keys_root/root root@10.10.10.10<br/>
+      Last login: Fri Jan 13 13:23:04 2023 from 10.10.10.11<br/>
+      [root@VM(Client) ~]#</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Написание <i style="color:rgb(255, 0, 0)">Playbook-ов</i>.</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><i style="color:rgb(255, 0, 0)">Ansible</i> работает с помощью <i style="color:rgb(255, 0, 0)">Playbook-ов</i>, написанием которых мы сейчас и займемся.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Плейбуки советую хранить в каталоге <i style="color:rgb(255, 0, 0)">/etc/ansible</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Плейбук для OC <i style="color:rgb(255, 0, 0)">CentOS 7</i>, на создание администратора на <i style="color:rgb(255, 0, 0)">VM(Client)</i> и сразу же копирования публичного ключа создаваемого администратора в каталог <i style="color:rgb(255, 0, 0)">/home/Larry/.ssh</i> с названием <i style="color:rgb(255, 0, 0)">authorized_keys</i> на <i style="color:rgb(255, 0, 0)">VM(Client)</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        ---<br/>
+        - hosts: CID<br/>
+        become: true<br/>
+        tasks:<br/>
+        <br/>
+        - name: Creating a user in the "Wheel" group<br/>
+          user:<br/>
+            name: Larry<br/>
+            password: 123456789<br/>
+            shell: /bin/bash<br/>
+            groups: wheel<br/>
+            append: yes<br/>
+            <br/>
+        - name: Creating a ssh key<br/>
+          user:<br/>
+            name: Larry<br/>
+            generate_ssh_key: yes<br/>
+            ssh_key_bits: 2048<br/>
+            ssh_key_file: /root/.ssh/id_rsa<br/>
+            <br/>
+        - name: Copying the ssh key to the user directory<br/>
+          authorized_key:<br/>
+            user: Larry<br/>
+            state: present<br/>
+            key: "{{ lookup('file', '/root/.ssh/id_rsa.pub') }}"<br/>
+            ...</i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Также хотел бы отметить, что плейбук начинается с символов: <i style="color:rgb(255, 0, 0)">"---"</i>, а заканчивается <i style="color:rgb(255, 0, 0)">"..."</i>. Как и показано на примере выше. Также, формат файла плейбука должен быть: <i style="color:rgb(255, 0, 0)">.yml</i>. Пример: <i style="color:rgb(255, 0, 0)">admadd.yml</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">На примере выше, было показано создание пользователя <i style="color:rgb(255, 0, 0)">Larry</i>, с паролем <i style="color:rgb(255, 0, 0)">123456789</i>, добавленного в группу пользователей <i style="color:rgb(255, 0, 0)">Wheel</i>. В предпоследней строке плейбука прописывайте тот путь, где лежит закрытый ключ создаваемого пользователя. Для каждого пользователя генерацию ключа делайте заново, а чтобы ключи не перемешались, уже созданные и скопированные ключи складируйте в отдельные папки.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Ключи для связи между сервером <i style="color:rgb(255, 0, 0)">Ansible</i> и клиентом(которые используются для пользователей <i style="color:rgb(255, 0, 0)">root</i>), можно использовать одни и те же, т.к. они не должны ни в коем случае распространяться среди пользователей компании/организации.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Данные <i style="color:rgb(255, 0, 0)">root-ssh</i>-ключи играют больше техническую роль для сервера <i style="color:rgb(255, 0, 0)">Ansible</i>, а именно для создания новых пользователей на клиентских <i style="color:rgb(255, 0, 0)">VM</i>, адреса которых будут прописаны в дальнейшем на сервере <i style="color:rgb(255, 0, 0)">Ansible</i> в файле <i style="color:rgb(255, 0, 0)">hosts</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Плейбук для OC <i style="color:rgb(255, 0, 0)">CentOS 7</i>, на создание пользователя на <i style="color:rgb(255, 0, 0)">VM(Client)</i> и сразу же копирования публичного ключа создаваемого пользователя в каталог <i style="color:rgb(255, 0, 0)">/home/Larry/.ssh</i> с названием <i style="color:rgb(255, 0, 0)">authorized_keys</i> на <i style="color:rgb(255, 0, 0)">VM(Client)</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        ---<br/>
+        - hosts: CID<br/>
+          become: true<br/>
+          tasks:<br/>
+          <br/>
+          - name: Creating a user in the "Users" group<br/>
+            user:<br/>
+              name: Larry<br/>
+              password: 123456789<br/>
+              shell: /bin/bash<br/>
+              groups: users<br/>
+              append: yes<br/>
+              <br/>
+          - name: Creating a ssh key<br/>
+            user:<br/>
+              name: Larry<br/>
+              generate_ssh_key: yes<br/>
+              ssh_key_bits: 2048<br/>
+              ssh_key_file: /root/.ssh/id_rsa<br/>
+              <br/>
+          - name: Copying the ssh key to the user directory<br/>
+            authorized_key:<br/>
+              user: Larry<br/>
+              state: present<br/>
+              key: "{{ lookup('file', '/root/.ssh/id_rsa.pub') }}"<br/>
+        ...</i></th>
+      </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Плейбук для OC <i style="color:rgb(255, 0, 0)">CentOS 7</i>, на удаление файла <i style="color:rgb(255, 0, 0)">authorized_keys</i> у пользователя <i style="color:rgb(255, 0, 0)">Larry</i> из каталога <i style="color:rgb(255, 0, 0)">/home/Larry/.ssh/authorized_keys</i>. Данный плейбук будет удобен для закрытия доступа по <i style="color:rgb(255, 0, 0)">ssh</i>-ключам, для тех пользователей, которые уволились или сменили свое место работы. Пример:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        ---<br/>
+        - hosts: CID<br/>
+          become: true<br/>
+          tasks:<br/>
+          <br/>
+          - name: Removing ssh keys<br/>
+            file:<br/>
+              path: /home/Larry/.ssh/authorized_keys<br/>
+              state: absent<br/>
+        ...</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><i style="color:rgb(255, 0, 0)">!!!</i> После создания плейбуков, <i style="color:rgb(255, 0, 0)">ОБЯЗАТЕЛЬНО</i> сгенеринуйте ещё одну пару ключей для пользователя <i style="color:rgb(255, 0, 0)">Larry !!!</i></p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ssh-keygen -t rsa</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для генерации <i style="color:rgb(255, 0, 0)">ssh</i>-ключей формата <i style="color:rgb(255, 0, 0)">RSA</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">6) Редактирование файла <i style="color:rgb(255, 0, 0)">Hosts</i>.</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Файл <i style="color:rgb(255, 0, 0)">hosts</i> взаимодействует с плейбуками. В нем указываются <i style="color:rgb(255, 0, 0)">IP</i>-адреса серверов, с которыми будут взаимодействовать плейбуки.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для удобства можно очистить файл <i style="color:rgb(255, 0, 0)">hosts</i> полностью, т.к. все что там написано все равно закомментировано.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Пример заполнения файла <i style="color:rgb(255, 0, 0)">hosts</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      [Test]<br/>
+      <br/>
+      10.10.10.10 ansible_user=root ansible_ssh_private_key_file=/root/.ssh/keys_root/root</i>
+      </th>
+      </tr>
+      <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>[Test]</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Название группы <i style="color:rgb(255, 0, 0)">IP</i>-адресов.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>10.10.10.10</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i><i style="color:rgb(255, 0, 0)">IP</i>-сервера клиента.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>ansible_user=root</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Пользователь под которым будет выполнен вход по <i style="color:rgb(255, 0, 0)">ssh</i>.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>ansible_ssh_private_key_file=/root/.ssh/keys_root/root</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Путь к закрытому ключу <i style="color:rgb(255, 0, 0)">root</i>.</i></b></td>
+       </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Чтобы проверить работоспособность <i style="color:rgb(255, 0, 0)">ssh</i>-подключения через файл <i style="color:rgb(255, 0, 0)">hosts</i>, нужно выполнить следующую команду:</p></i>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>ansible -i /etc/ansible/hosts -m ping all</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для проверки работоспособности <i style="color:rgb(255, 0, 0)">ssh</i>-подключения.</i></b></td>
+     </tr>
+     <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Результат успешного выполнения команды:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        [root@server-ansible ~]# ansible -i /etc/ansible/hosts -m ping all<br/><br/>
+        [DEPRECATION WARNING]: Distribution fedora 37 on host 10.10.10.10 should use /usr/bin/python3, but is using /usr/bin/python for backward compatibility with prior Ansible releases. A future Ansible release will default to using the discovered platform python for this host. See https://docs.ansible.com/ansible/2.9/reference_appendices/interpreter_discovery.html for more information. This feature will be removed in version 2.12. Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.<br/><br/>
+        10.10.10.10 | SUCCESS => {<br/>
+            "ansible_facts": {<br/>
+                "discovered_interpreter_python": "/usr/bin/python"<br/>
+            }, <br/>
+            "changed": false, <br/>
+            "ping": "pong"<br/>
+        }</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">7) Тестирование <i style="color:rgb(255, 0, 0)">Playbook</i>-ов.</p></i></h3>
+<h3><i style="color:rgb(255, 0, 0)"><p align="Left">ВНИМАНИЕ!!! ПЕРЕД ЗАПУСКОМ ПЛЕЙБУКА, ОБЯЗАТЕЛЬНО СГЕНЕРИРУЙТЕ НОВЫЕ КЛЮЧИ ДЛЯ НОВОГО ПОЛЬЗОВАТЕЛЯ !!!</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для запуска плейбука выполните следующую команду:</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ansible-playbook /etc/ansible/admadd.yml -i hosts</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для запуска плейбука <i style="color:rgb(255, 0, 0)">admadd.yml</i>(который находится в каталоге <i style="color:rgb(255, 0, 0)">/etc/ansible/</i>) на тех серверах, которые прописаны в файле <i style="color:rgb(255, 0, 0)">hosts</i>(в нашем случае <i style="color:rgb(255, 0, 0)">10.10.10.10</i>).</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+   <tr>
+    <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Результат успешного выполнения плейбука:
+    <br/>
+    <br/><i style="color:rgb(162, 0, 255)">
+    [root@server-ansible ~]# ansible-playbook /etc/ansible/adminadd.yml -i /etc/ansible/hosts<br/>
+    <br/>
+    PLAY [CID] *********************************************************************************************<br/>
+    ********************************************************************************************************<br/>
+    ******************************<br/>
+    <br/>
+    TASK [Gathering Facts] *********************************************************************************<br/>
+    ********************************************************************************************************<br/>
+    ******************************<br/>
+    [DEPRECATION WARNING]: Distribution fedora 37 on host 10.10.10.10 should use /usr/bin/python3, but is using <br/>
+    /usr/bin/python for backward compatibility with prior Ansible releases. A future Ansible release will default to using the <br/>
+    discovered platform python for this host. See https://docs.ansible.com/ansible/2.9/reference_appendices/interpreter_discovery.html<br/>
+     for more information. This feature will be removed in version 2.12. Deprecation warnings can be disabled <br/>
+    by setting deprecation_warnings=False in ansible.cfg.<br/>
+    ok: [10.10.10.10]<br/>
+    <br/>
+    TASK [Creating a user in the "Wheel" group] **************************************************************<br/>
+    **********************************************************************************************************<br/>
+    **************************<br/>
+    [WARNING]: The value ******** (type int) in a string field was converted to '********' (type string). If this <br/>
+    does not look like what you expect, quote the entire value to ensure it does not change.<br/>
+    [WARNING]: The input password appears not to have been hashed. The 'password' argument must be encrypted for this module to work properly.<br/>
+    changed: [10.10.10.10]<br/>
+    <br/>
+    TASK [Creating a ssh key] **********************************************************************************<br/>
+    ************************************************************************************************************<br/>
+    **********************<br/>
+    ok: [10.10.10.10]<br/>
+    <br/>
+    TASK [Copying the ssh key to the user directory] ***********************************************************<br/>
+    ************************************************************************************************************<br/>
+    **********************<br/>
+    changed: [10.10.10.10]<br/>
+    <br/>
+    PLAY RECAP *************************************************************************************************<br/>
+    ************************************************************************************************************<br/>
+    **********************<br/>
+    10.10.10.10              : ok=4    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0</i></th>
+    </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После успешного выполнения плейбука, можете с сервера <i style="color:rgb(255, 0, 0)">Ansible</i> проверить работоспособность <i style="color:rgb(255, 0, 0)">ssh</i>-соединения к <i style="color:rgb(255, 0, 0)">VM(Client)</i> с помощью <i style="color:rgb(255, 0, 0)">ssh</i>-ключа(предназначенного) для пользователя <i style="color:rgb(255, 0, 0)">Larry</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Пример:</p></i>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ssh -i /root/.ssh/id_rsa Larry@10.10.10.10</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для подключения к <i style="color:rgb(255, 0, 0)">VM(Client)</i> по протоколу <i style="color:rgb(255, 0, 0)">ssh</i>, с помощью закрытого <i style="color:rgb(255, 0, 0)">ssh</i>-ключа(предназначенного для <i style="color:rgb(255, 0, 0)">Larry</i>), под пользователем <i style="color:rgb(255, 0, 0)">Larry</i>.</i></b></td>
+     </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Пример успешного входа на <i style="color:rgb(255, 0, 0)">VM(Client)</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        [root@server-ansible ~]# ssh -i /root/.ssh/id_rsa Larry@10.10.10.10<br/>
+        Last login: Fri Jan 13 10:06:03 2023 from 10.10.10.11<br/>
+        [root@VM(Client) ~]#</i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После тестирования, также в каталоге <i style="color:rgb(255, 0, 0)">/root/.ssh/</i> поздайте отдельную папку для пары ключей от учетной записи пользователя <i style="color:rgb(255, 0, 0)">Larry</i> и поместите их в неё, при необходимости переименуйте. Ключ <i style="color:rgb(255, 0, 0)">id_rsa</i> можете выдать пользователю <i style="color:rgb(255, 0, 0)">Larry</i>)</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">На этом инструкция завершена! Спасибо за внимание!)</p></i></h3>
+
+<style>
+.btn:link,
+.btn:visited {
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 15px 40px;
+    display: inline-block;
+    border-radius: 100px;
+    transition: all .2s;
+    position: absolute;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-white {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.btn::after {
+    content: "";
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+    border-radius: 100px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    transition: all .4s;
+}
+
+.btn-white::after {
+    background-color: #ffb7b7;
+}
+
+.btn:hover::after {
+    transform: scaleX(1.4) scaleY(1.6);
+    opacity: 0;
+}
+
+.btn-animated {
+    animation: moveInBottom 5s ease-out;
+    animation-fill-mode: backwards;
+}
+
+@keyframes moveInBottom {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+</style>
+
+<div class="text-box">
+  <a href="https://dimoroz772.github.io/Linux_CentOS/"class="btn btn-white btn-animate">Back</a>
+</div>
