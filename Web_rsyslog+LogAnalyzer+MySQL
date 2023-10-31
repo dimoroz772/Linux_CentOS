@@ -1,0 +1,586 @@
+<head>
+  <title>rsyslog+LogAnalyzer+MySQL</title>
+  <link rel="shortcut icon" href="./CentOS_Logo.png" type="image/png">
+</head>
+ <head>
+  <meta charset="utf-8">
+ </head>
+<style>
+body{
+    background-image: url('Fon_CentOS.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    color: #333;
+}
+a {
+    text-decoration: none;
+}
+p {
+  text-indent: 1.5em;
+  text-align: justify;
+}
+</style>
+<style> 
+  table{
+  border: 1px black solid;
+  }
+  th, td {
+    border: 1px solid grey; /*  бахнуть на rgba(255,255,0,0); */
+  }
+</style>
+  
+<br/>
+<p align="center">
+<Center>
+<img src="./centos-linux.png" width="450" height="150"/>
+</Center>
+</p><br/>
+ <br/>
+ <br/>
+
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Всем привет! В данном посте рассматривается установка и настройка централизованного журналирования сетевых устройств <i style="color:rgb(255, 0, 0)">Adiscon LogAnalyzer</i> развернутого на ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i>.</p></i></h3>
+<h2><i style="color:rgb(255, 0, 0)"><p align="Center">Все описанные ниже действия в командной строке выполнялись под пользователем root.</p></i></h2>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для реализации данного проекта мне потребовалось:</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Обновить пакеты ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i> до последней версии</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Прописать статические <i style="color:rgb(255, 0, 0)">IP</i>-адреса</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Выключить систему принудительного контроля доступа <i style="color:rgb(255, 0, 0)">SELinux</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Установить необходимые пакеты/компоненты</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Настроить базу данных <i style="color:rgb(255, 0, 0)">MySQL</i> для <i style="color:rgb(255, 0, 0)">rsyslog</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">6) Скачать и установить ПО <i style="color:rgb(255, 0, 0)">LogAnalyzer</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">7) Запустить веб-установщик <i style="color:rgb(255, 0, 0)">LogAnalyzer</i> и подключить к созданной базе данных</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">8) Подключить сетевое устройство к <i style="color:rgb(255, 0, 0)">rsyslog</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">9) Подробнее о чистке базы данных <i style="color:rgb(255, 0, 0)">LogAnalyzer</i></p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Предисловие:</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>LogAnalyzer</b> - это программное обеспечение, устанавливаемое, как правило, на сервер, которое с определённой периодичностью собирает накопленные узлом журналы сервера, обрабатывающее данные из них, хранящее извлечённые данные во внутреннем архиве или базе данных, и создающее страницы, показывающие статистическую информацию конечным пользователям.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Rsyslog</b> - это это программная утилита с открытым исходным кодом, используемая в <i style="color:rgb(255, 0, 0)">UNIX</i> и <i style="color:rgb(255, 0, 0)">Unix</i>-подобных компьютерных системах для пересылки сообщений журнала в сети.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>MySQL</b> - это свободная реляционная система управления базами данных.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>MariaDB</b> — это ответвление от системы управления базами данных <i style="color:rgb(255, 0, 0)">MySQL</i>, разрабатываемое сообществом под лицензией <i style="color:rgb(255, 0, 0)">GNU GPL</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>NMTUI</b> - это инструмент командной строки, который используется для настройки сети в системах <i style="color:rgb(255, 0, 0)">Gnu/Linux</i>. При запуске он вызывает графический текстовый интерфейс, который помогает пользователям легко и эффективно настраивать сетевые интерфейсы.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>SELinux</b> - это система принудительного контроля доступа, реализованная на уровне ядра.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Nano</b> - это консольный текстовый редактор для <i style="color:rgb(255, 0, 0)">UNIX</i> и <i style="color:rgb(255, 0, 0)">Unix</i>-подобных операционных систем, основанный на библиотеке <i style="color:rgb(255, 0, 0)">curses</i> и распространяемый под лицензией <i style="color:rgb(255, 0, 0)">GNU GPL</i>.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Перед началом выполнения каких-либо манипуляций по настройке связки <i style="color:rgb(255, 0, 0)">rsyslog+LogAnalyzer+MySQL</i>, нужно выполнить подготовку ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i>. Для начала обновим пакеты системы.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y && yum upgrade -y</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Поиск и обновление пакетов системы.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Также для избежания потери связи с <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, нужно позаботиться о статической <i style="color:rgb(255, 0, 0)">IP</i>-адресации. Её можно настроить как на самой <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, так и на самом сетевом устройстве.</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Статическую адресацию можно прописать с помощью инструмента командной строки <i style="color:rgb(255, 0, 0)">nmtui</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y NetworkManager-tui</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка пакета <i style="color:rgb(255, 0, 0)">nmtui</i> для настройки сети на <i style="color:rgb(255, 0, 0)">АРМ/VM</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Гайд по тому, как пользоваться инструментом <i style="color:rgb(255, 0, 0)">nmtui</i>, вы можете посмотреть в интернете.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) После настройки сети, нужно <i style="color:rgb(255, 0, 0)">ОБЯЗАТЕЛЬНО</i> отключить систему контроля доступа <i style="color:rgb(255, 0, 0)">SELinux НАВСЕГДА</i>.</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Если данную систему не выключить, то после настройки <i style="color:rgb(255, 0, 0)">LogAnalyzer</i>, в нём же у вас все время будут сыпаться следующие ошибки:</p></i>
+<i style="color:rgb(255, 0, 0)"><p align="Left">1. file './...]': open error: Permission denied [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2433 ]</p></i>
+<i style="color:rgb(255, 0, 0)"><p align="Left">2. action 'action 7' resumed (module 'builtin:omfile') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]</p></i>
+<i style="color:rgb(255, 0, 0)"><p align="Left">3. file './...]': open error: Permission denied [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2433 ]</p></i>
+<i style="color:rgb(255, 0, 0)"><p align="Left">4. action 'action 8' resumed (module 'builtin:omfile') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]</p></i>
+<i style="color:rgb(255, 0, 0)"><p align="Left">5. action 'action 9' resumed (module 'ommysql') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># sestatus</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для проверки статуса <i style="color:rgb(255, 0, 0)">SELinux</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Откройте config-файл по пути: /etc/selinux/</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для редактирования файла можно воспользоваться консольным текстовым редактором <i style="color:rgb(255, 0, 0)">nano</i>. По тому как им пользоваться, всю информацию можно найти в интернете.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/selinux/config</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для открытия и редактирования конфигурационного файла <i style="color:rgb(255, 0, 0)">SELinux</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Конфигурационный файл <i style="color:rgb(255, 0, 0)">SELinux</i> должен выглядеть следующим образом:</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Конфигурационный файл <i style="color:rgb(255, 0, 0)">SELinux</i> должен выглядеть следующим образом:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      # This file controls the state of SELinux on the system.<br/>
+      # SELINUX= can take one of these three values:<br/>
+      #       enforcing - SELinux security policy is enforced.<br/>
+      #       permissive - SELinux prints warnings instead of enforcing.<br/>
+      #       disabled - No SELinux policy is loaded.<br/>
+      SELINUX=disabled<br/>
+      # SELINUXTYPE= can take one of these two values:<br/>
+      #       targeted - Targeted processes are protected,<br/>
+      #       mls - Multi Level Security protection.<br/>
+      SELINUXTYPE=targeted</i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После внесённых изменений, сохраняем файл, выходим из консольного текстового редактора и отправляем <i style="color:rgb(255, 0, 0)">АРМ/VM</i> в перезагрузку.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># reboot</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки <i style="color:rgb(255, 0, 0)">АРМ/VM</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После перезагрузки вашего устройства, можете снова ввести команду <i style="color:rgb(255, 0, 0)">sestatus</i> и убедиться в том, что у вас отключена система <i style="color:rgb(255, 0, 0)">SELinux</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Вывод отключенной системы должен выглядеть вот так:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      SELinux status: disabled</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Установка и включение необходимых пакетов/компонентов.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y httpd php php-mysql wget mariadb-server rsyslog-mysql</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки необходимых пакетов.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable httpd && systemctl start httpd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для включения сервиса <i style="color:rgb(255, 0, 0)">httpd</i> в автозагрузку и запуска сервиса <i style="color:rgb(255, 0, 0)">httpd</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable mariadb && systemctl start mariadb</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для включения сервиса <i style="color:rgb(255, 0, 0)">mariadb</i> в автозагрузку и запуска сервиса <i style="color:rgb(255, 0, 0)">mariadb</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Настройка базы данных <i style="color:rgb(255, 0, 0)">MySQL</i> для <i style="color:rgb(255, 0, 0)">rsyslog</i>.</p></i></h3>
+<h3><i style="color:rgb(255, 0, 0)"><p align="Left">!!! Изначально, в базе данных MySQL, у пользователя root пароль не назначен. Поэтому, когда система попросит вас ввести пароль, просто нажмите Enter !!!</p></i></h3>
+<h3><i style="color:rgb(255, 0, 0)"><p align="Left">!!! Также, когда вы работаете в системе MariaDB, то после того, как вы полностью ввели команду, ОБЯЗАТЕЛЬНО нужно поставить в конце символ ";" !!!</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>mysql -u root -p < /usr/share/doc/rsyslog-8.24.0/mysql-createDB.sql</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для импортации схемы базы данных <i style="color:rgb(255, 0, 0)">rsyslog</i>, предложенной по умолчанию.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>mysql -u root -p</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда подключения к системе <i style="color:rgb(255, 0, 0)">MariaDB</i>, для управления базами данных <i style="color:rgb(255, 0, 0)">MySQL</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>GRANT ALL ON Syslog.* TO 'rsyslog'@'localhost' IDENTIFIED BY 'Password';</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда создания пользователя <i style="color:rgb(255, 0, 0)">rsyslog</i> с паролем <i style="color:rgb(255, 0, 0)">Password</i> для доступа к базе данных <i style="color:rgb(255, 0, 0)">Syslog</i>. Пароль можете придумать свой.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>FLUSH PRIVILEGES;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для того, чтобы задать привилегии пользователя путем непосредственного внесения изменений в таблицы назначения привилегий.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>exit</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда выхода из системы <i style="color:rgb(255, 0, 0)">MariaDB</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>cp /etc/rsyslog.conf /etc/rsyslog.conf.org</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Данной командой сделайте копию файла <i style="color:rgb(255, 0, 0)">rsyslog.conf</i> и поменяйте ему название на <i style="color:rgb(255, 0, 0)">rsyslog.conf.org</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Далее откройте файл <i style="color:rgb(255, 0, 0)">rsyslog.conf</i> в текстовом редакторе и раскомментируйте следующие строки:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        $ModLoad imudp<br/>
+        $UDPServerRun 514<br/><br/>
+        $ModLoad imtcp<br/>
+        $InputTCPServerRun 514</i></th>
+      </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">На всякий случай выложу конфиг файла <i style="color:rgb(255, 0, 0)">rsyslog.conf</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        <br/>
+        # rsyslog configuration file<br/>
+        <br/>
+# For more information see /usr/share/doc/rsyslog-*/rsyslog_conf.html<br/>
+# If you experience problems, see http://www.rsyslog.com/doc/troubleshoot.html<br/>
+<br/>
+#### MODULES ####<br/>
+<br/>
+# The imjournal module bellow is now used as a message source instead of imuxsock.<br/>
+$ModLoad imuxsock # provides support for local system logging (e.g. via logger command)<br/>
+$ModLoad imjournal # provides access to the systemd journal<br/>
+#$ModLoad imklog # reads kernel messages (the same are read from journald)<br/>
+#$ModLoad immark  # provides --MARK-- message capability<br/>
+<br/>
+# Provides UDP syslog reception<br/>
+$ModLoad imudp<br/>
+$UDPServerRun 514<br/>
+<br/>
+# Provides TCP syslog reception<br/>
+$ModLoad imtcp<br/>
+$InputTCPServerRun 514<br/>
+<br/>
+<br/>
+#### GLOBAL DIRECTIVES ####<br/>
+<br/>
+# Where to place auxiliary files<br/>
+$WorkDirectory /var/lib/rsyslog<br/>
+<br/>
+# Use default timestamp format<br/>
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat<br/>
+<br/>
+# File syncing capability is disabled by default. This feature is usually not required,<br/>
+# not useful and an extreme performance hit<br/>
+#$ActionFileEnableSync on<br/>
+<br/>
+# Include all config files in /etc/rsyslog.d/<br/>
+$IncludeConfig /etc/rsyslog.d/*.conf<br/>
+<br/>
+# Turn off message reception via local log socket;<br/>
+# local messages are retrieved through imjournal now.<br/>
+$OmitLocalLogging on<br/>
+<br/>
+# File to store the position in the journal<br/>
+$IMJournalStateFile imjournal.state<br/>
+<br/>
+<br/>
+#### RULES ####<br/>
+<br/>
+# Log all kernel messages to the console.<br/>
+# Logging much else clutters up the screen.<br/>
+#kern.*                                                 /dev/console<br/>
+<br/>
+# Log anything (except mail) of level info or higher.<br/>
+# Don't log private authentication messages!<br/>
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages<br/>
+<br/>
+# The authpriv file has restricted access.<br/>
+authpriv.*                                              /var/log/secure<br/>
+<br/>
+# Log all the mail messages in one place.<br/>
+mail.*                                                  -/var/log/maillog<br/>
+<br/>
+<br/>
+# Log cron stuff<br/>
+cron.*                                                  /var/log/cron<br/>
+<br/>
+# Everybody gets emergency messages<br/>
+*.emerg                                                 :omusrmsg:*<br/>
+<br/>
+# Save news errors of level crit and higher in a special file.<br/>
+uucp,news.crit                                          /var/log/spooler<br/>
+<br/>
+# Save boot messages also to boot.log<br/>
+local7.*                                                /var/log/boot.log<br/>
+<br/>
+<br/>
+# ### begin forwarding rule ###<br/>
+# The statement between the begin ... end define a SINGLE forwarding<br/>
+# rule. They belong together, do NOT split them. If you create multiple<br/>
+# forwarding rules, duplicate the whole block!<br/>
+# Remote Logging (we use TCP for reliable delivery)<br/>
+#<br/>
+# An on-disk queue is created for this action. If the remote host is<br/>
+# down, messages are spooled to disk and sent when it is up again.<br/>
+#$ActionQueueFileName fwdRule1 # unique name prefix for spool files<br/>
+#$ActionQueueMaxDiskSpace 1g   # 1gb space limit (use as much as possible)<br/>
+#$ActionQueueSaveOnShutdown on # save messages to disk on shutdown<br/>
+#$ActionQueueType LinkedList   # run asynchronously<br/>
+#$ActionResumeRetryCount -1    # infinite retries if host is down<br/>
+# remote host is: name/ip:port, e.g. 192.168.0.1:514, port optional<br/>
+#*.* @@remote-host:514<br/>
+# ### end of the forwarding rule ###<br/>
+<br/>
+#[...]<br/>
+# Load the MySQL Module<br/>
+module(load="ommysql")<br/>
+#[...]<br/>
+#*.* :ommysql:127.0.0.1,Syslog_Database,syslog_user,password<br/>
+*.* :ommysql:127.0.0.1,Syslog,rsyslog,Password<br/>
+<br/>
+$template RemoteLogs,"/var/log/rsyslog/%HOSTNAME%/%PROGRAMNAME%.log"<br/>
+*.* ?RemoteLogs<br/>
+& ~</i></th>
+      </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Далее в конец того же файла добавьте следующие строки<i style="color:rgb(255, 0, 0)">(как показано в выше выложенном конфиге)</i>, которые создадут новое правило переадресации и загрузят модуль <i style="color:rgb(255, 0, 0)">MySQL</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        # Load the MySQL Module<br/>
+        module(load="ommysql")<br/>
+        <br/>
+        #*.* :ommysql:127.0.0.1,Syslog_Database,syslog_user,password<br/>
+        *.* :ommysql:127.0.0.1,Syslog,rsyslog,Password</i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После редактирования файла <i style="color:rgb(255, 0, 0)">rsyslog.conf</i>, также выполните команду для перезагрузки сервиса <i style="color:rgb(255, 0, 0)">rsyslog</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl restart rsyslog</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки утилиты сервиса <i style="color:rgb(255, 0, 0)">rsyslog</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Если выполнили все правильно, то никаких ошибок при перезагрузке или последующем запуске службы возникнуть не должно. Также можно проверить состояние службы.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl status rsyslog</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда проверки статуса службы <i style="color:rgb(255, 0, 0)">rsyslog</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">6) Загрузка, установка и настройка ПО <i style="color:rgb(255, 0, 0)">LogAnalyzer</i>.</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Превым этапом нужно скачать установочный архив с ПО <i style="color:rgb(255, 0, 0)">LogAnalyzer</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cd /tmp</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перехода в папку <i style="color:rgb(255, 0, 0)">tmp</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># wget http://download.adiscon.com/loganalyzer/loganalyzer-4.1.10.tar.gz</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для загрузки архива с ПО <i style="color:rgb(255, 0, 0)">LogAnalyzer</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># tar -xzvf loganalyzer-4.1.10.tar.gz</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда разархивации архива с ПО <i style="color:rgb(255, 0, 0)">LogAnalizer</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mkdir /var/www/html/loganalyzer</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания каталога <i style="color:rgb(255, 0, 0)">loganalyzer</i> в веб-каталоге <i style="color:rgb(255, 0, 0)">apache</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Команды для копирования установочных файлов в каталог <i style="color:rgb(255, 0, 0)">loganalyzer</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        # cp -r /tmp/loganalyzer-4.1.10/src/* /var/www/html/loganalyzer<br/>
+        # cp -r /tmp/loganalyzer-4.1.10/contrib/* /var/www/html/loganalyzer</i></th>
+      </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cd /var/www/html/loganalyzer</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда перехода в каталог <i style="color:rgb(255, 0, 0)">loganalyzer</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># touch config.php</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания файла <i style="color:rgb(255, 0, 0)">config.php</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># chown apache:apache config.php</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Данной командой изменим владельца и группу у файла <i style="color:rgb(255, 0, 0)">config.php</i> на <i style="color:rgb(255, 0, 0)">apache:apache</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># chmod 777 config.php</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Данной командой выдадим файлу <i style="color:rgb(255, 0, 0)">config.php</i> права на чтение, запись и выполнение.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># chcon -h -t httpd_sys_script_rw_t /var/www/html/loganalyzer/config.php</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Данной командой изменим контекст файла <i style="color:rgb(255, 0, 0)">config.php</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">7) Запуск веб-установщика <i style="color:rgb(255, 0, 0)">LogAnalyzer</i> и подключение к базе данных.</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для последующей настройки <i style="color:rgb(255, 0, 0)">LogAnalyzer</i>, нужно перейти по следующему адресу: <i style="color:rgb(255, 0, 0)">http://localhost/loganalyzer</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Если вы хотите производить дальнейшую настройку на другом <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, то перейдите по следующему адресу: <i style="color:rgb(255, 0, 0)">http://IP/loganalyzer</i> Указав вместо <i style="color:rgb(255, 0, 0)">IP</i> адрес <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, на которой развернута связка <i style="color:rgb(255, 0, 0)">rsyslog+LogAnalyzer+MySQL</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Далее следуйте прописанным ниже шагам:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        1 - В высветившемня окошке с текстом, вы увидите слово "here" синего цвета, кликайте на него;<br/>
+        2 - Нажмите на кнопку "Next";<br/>
+        3 - Убедитесь в том, что файл "config.php" доступен для записи и нажмите кнопку "Next";<br/>
+        4 - Заполните данные базы данных для loganalyzer, указав имя базы данных: "Syslog", пользователя: "rsyslog" и пароль: "Password", созданные на последних шагах, и нажмите кнопку "Next";<br/>
+        5 - Нажмите на кнопку "Next";<br/>
+        6 - Нажмите на кнопку "Next";<br/>
+        7 - Создайте учётную запись администратора для LogAnalyzer;<br/>
+        8 - Заполните следующие строки:<br/>
+        Name of the Source: My Syslog Source<br/>
+        Source Type: MYSQL Native<br/>
+        Select View: Syslog Fields<br/>
+        Table type: MonitorWare<br/>
+        Database Host: localhost<br/>
+        Database Name: Syslog<br/>
+        Database Tablename: systemevents<br/>
+        Database User: rsyslog<br/>
+        Database Password: Password<br/>
+        Enable Row Counting: Yes<br/>
+        Нажмите на кнопку "Next".<br/>
+        9 - Нажмите на кнопку "Finish!".</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgb(255, 0, 0)"><p align="Left">После проделанных действий, у вас появится окошко, где нужно будет произвести авторизацию. В нём укажите учетные данные, которые вы создали в шаге №7.</p></i></h3>
+<h3><i style="color:rgb(255, 0, 0)"><p align="Left">Если вы все сделали правильно, то после логирования у вас появится таблица с данными. Если же вы сделали что-то не так, то у вас после логирования появится ошибка.</p></i></h3>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">8) Подключить к <i style="color:rgb(255, 0, 0)">rsyslog</i> сетевое устройство.</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">На мой взгляд, нет ничего сложно при подключении сетевого устройства к <i style="color:rgb(255, 0, 0)">rsyslog</i>. Если вы используете <i style="color:rgb(255, 0, 0)">Web</i>-интерфейс<i style="color:rgb(255, 0, 0)">(в моём случае коммутатор ZyXel)</i>, то вам нужно перейти по пути: <i style="color:rgb(255, 0, 0)">Management</i> > <i style="color:rgb(255, 0, 0)">Syslog Setup</i>. После того, как вы провалитесь во вкладку <i style="color:rgb(255, 0, 0)">Syslog Setup</i>, вам будет нужно заполнить/выполнить настройку во всех строках.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Опираясь на сетевое оборудование <i style="color:rgb(255, 0, 0)">ZyXel</i>, заполняются следующие строки:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+       1 - <i style="color:rgb(255, 0, 0)">Syslog Activation</i>; (выставляется галочка для активации);<br/>
+       2 - <i style="color:rgb(255, 0, 0)">Logging type</i>; (выставляется галочка для активации);<br/>
+       3 - Выбирается уровень передачи логов; (для того, чтобы передовалась вся та информация, которая пишется в логах на сетевом устройстве, выбирайте 7 уровень);<br/>
+       4 - Прописывается <i style="color:rgb(255, 0, 0)">IP</i>-адрес <i style="color:rgb(255, 0, 0)">Syslog</i>-сервера и рядом выставляется уровень логирования <i style="color:rgb(255, 0, 0)">(всегда выбирайте "local use 0-7")</i>.</i></th>
+      </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Вкратце об уровнях логирования<i style="color:rgb(255, 0, 0)">(относится ко всем коммутаторам)</i>:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        0 — <i style="color:rgb(255, 0, 0)">Emergencies</i> — Система не работоспособна<br/>
+        1 — <i style="color:rgb(255, 0, 0)">Alerts</i> — Необходимо срочное вмешательство<br/>
+        2 — <i style="color:rgb(255, 0, 0)">Critical</i> — Критические события<br/>
+        3 — <i style="color:rgb(255, 0, 0)">Errors</i> — Сообщения о ошибках<br/>
+        4 — <i style="color:rgb(255, 0, 0)">Warning</i> — Всевозможные предупреждения<br/>
+        5 — <i style="color:rgb(255, 0, 0)">Notifications</i> — Различные важные уведомления<br/>
+        6 — <i style="color:rgb(255, 0, 0)">Informational</i> — Информационные сообшения<br/>
+        7 — <i style="color:rgb(255, 0, 0)">Debugging</i> — Отладочые сообщения</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">9) <i style="color:rgb(255, 0, 0)">LogAnalyzer</i> чистка базы данных.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cd /var/www/html/loganalyzer/cron/</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перехода в нужный каталог.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>php ./maintenance.php cleandata 1 olderthan 86400</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для удаления старых записей старше <i style="color:rgb(255, 0, 0)">86400 сек (24 часов)</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">
+        3600 сек — 1 час<br/>
+        86400 сек — 24 часа<br/>
+        864000 сек — 10дней<br/>
+        2592000 сек — 30 дней</i></th>
+      </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Если вам критично, то можете сделать скрипт для чистки базы данных <i style="color:rgb(255, 0, 0)">LogAnalyzer</i>-a и добавить его в автовыполнение в планировщик задач <i style="color:rgb(255, 0, 0)">Cron</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Скрипт будет выглядеть следующим образом:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        #!/bin/bash<br/>
+        cd /var/www/html/loganalyzer/cron/<br/>
+        php ./maintenance.php cleandata 1 olderthan 86400</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">На этом интрукция завершена! Спасибо за внимание!)</p></i></h3>
+
+<style>
+.btn:link,
+.btn:visited {
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 15px 40px;
+    display: inline-block;
+    border-radius: 100px;
+    transition: all .2s;
+    position: absolute;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-white {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.btn::after {
+    content: "";
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+    border-radius: 100px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    transition: all .4s;
+}
+
+.btn-white::after {
+    background-color: #ffb7b7;
+}
+
+.btn:hover::after {
+    transform: scaleX(1.4) scaleY(1.6);
+    opacity: 0;
+}
+
+.btn-animated {
+    animation: moveInBottom 5s ease-out;
+    animation-fill-mode: backwards;
+}
+
+@keyframes moveInBottom {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+</style>
+
+<div class="text-box">
+  <a href="https://dimoroz772.github.io/Linux_CentOS/"class="btn btn-white btn-animate">Back</a>
+</div>
