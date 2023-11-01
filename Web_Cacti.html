@@ -1,0 +1,617 @@
+<head>
+  <title>Cacti</title>
+  <link rel="shortcut icon" href="./CentOS_Logo.png" type="image/png">
+</head>
+ <head>
+  <meta charset="utf-8">
+ </head>
+<style>
+body{
+    background-image: url('Fon_CentOS.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    color: #333;
+}
+a {
+    text-decoration: none;
+}
+p {
+  text-indent: 1.5em;
+  text-align: justify;
+}
+</style>
+<style> 
+  table{
+  border: 1px black solid;
+  }
+  th, td {
+    border: 1px solid grey; /*  бахнуть на rgba(255,255,0,0); */
+  }
+</style>
+  
+<br/>
+<p align="center">
+<Center>
+<img src="./centos-linux.png" width="450" height="150"/>
+</Center>
+</p><br/>
+ <br/>
+ <br/>
+
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Всем привет! В данном посте рассматривается установка и настройка сервера с системой мониторинга <i style="color:rgb(255, 0, 0)">Cacti</i> развернутого на ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i>.</p></i></h3>
+<h2><i style="color:rgb(255, 0, 0)"><p align="Center">Все описанные ниже действия в командной строке выполнялись под пользователем root.</p></i></h2>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для реализации данного проекта мне потребовалось:</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Прописать статические <i style="color:rgb(255, 0, 0)">IP</i>-адреса</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Обновить пакеты ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i> до последней версии</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Отключить систему принудительного контроля доступа <i style="color:rgb(255, 0, 0)">SELinux</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Подключить репозиторий ОС <i style="color:rgb(255, 0, 0)">Fedora</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Установить пакета <i style="color:rgb(255, 0, 0)">Apache</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">6) Установить пакеты <i style="color:rgb(255, 0, 0)">SNMP and RRDTool</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">7) Установить пакеты сервера <i style="color:rgb(255, 0, 0)">MariaDB</i> и первоначальная настройка</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">8) Установить пакет <i style="color:rgb(255, 0, 0)">PHP</i> и дополнительные для его корректной работы пакеты</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">9) Создать базу данных для <i style="color:rgb(255, 0, 0)">Cacti</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">10) Оптимизировать базу данных</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">11) Установить пакет <i style="color:rgb(255, 0, 0)">yum-utils</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">12) Обновить пакеты <i style="color:rgb(255, 0, 0)">PHP</i> с версии <i style="color:rgb(255, 0, 0)">5</i> до более свежей</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">13) Установить и настроить <i style="color:rgb(255, 0, 0)">Cacti</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">14) Настроить <i style="color:rgb(255, 0, 0)">Cron</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">15) Настроить <i style="color:rgb(255, 0, 0)">Apache</i> для <i style="color:rgb(255, 0, 0)">Cacti</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">16) Настроить <i style="color:rgb(255, 0, 0)">Firewall</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">17) Настроить <i style="color:rgb(255, 0, 0)">Cacti</i> через <i style="color:rgb(255, 0, 0)">Web</i>-интерфейс перед использованием</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Предисловие:</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Cacti</b> — это <i style="color:rgb(255, 0, 0)">open-source</i> <i style="color:rgb(255, 0, 0)">Web</i>-приложение, система позволяет строить графики при помощи <i style="color:rgb(255, 0, 0)">RRDtool</i>. <i style="color:rgb(255, 0, 0)">Cacti</i> собирает статистические данные за определённые временные интервалы и позволяет отобразить их в графическом виде.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>SELinux</b> — это реализация системы принудительного контроля доступа, которая может работать параллельно с классической избирательной системой контроля доступа.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>EPEL (Extra Packages for Enterprise Linux)</b> — это открытое бесплатное хранилище пакетов от <i style="color:rgb(255, 0, 0)">Fedora</i>. Оно содержит пакеты дополнительного программного обеспечения для <i style="color:rgb(255, 0, 0)">Linux</i>. Пакеты этого репозитория не конфликтуют с пакетами <i style="color:rgb(255, 0, 0)">RHEL</i>, поэтому этот репозиторий самый безопасный в использовании для <i style="color:rgb(255, 0, 0)">CentOS</i>.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Remi</b> — это хранилище yum-репозиториев. Хранилище <i style="color:rgb(255, 0, 0)">Remi</i> предоставляет разнообразные <i style="color:rgb(255, 0, 0)">up-to-date</i> пакеты, которые очень полезны или являются необходимыми для многих популярных <i style="color:rgb(255, 0, 0)">Web</i>-сервисов.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Cron</b> — это классический демон, использующийся для периодического выполнения заданий в определённое время. Регулярные действия описываются инструкциями, помещенными в файлы <i style="color:rgb(255, 0, 0)">crontab</i> и в специальные каталоги.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Для избежания потери связи с <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, нужно позаботиться о статической <i style="color:rgb(255, 0, 0)">IP</i>-адресации. Её можно настроить как на самой <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, так и на самом сетевом устройстве. Статическую адресацию можно прописать с помощью инструмента командной строки <i style="color:rgb(255, 0, 0)">nmtui</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y NetworkManager-tui</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка пакета <i style="color:rgb(255, 0, 0)">nmtui</i> для настройки сети на <i style="color:rgb(255, 0, 0)">АРМ/VM</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Гайд по тому, как пользоваться инструментом <i style="color:rgb(255, 0, 0)">nmtui</i>, вы можете посмотреть в интернете.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Обновление пакетов системы.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y && yum upgrade -y</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Поиск и обновление пакетов системы.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Отключение системы принудительного контроля доступа <i style="color:rgb(255, 0, 0)">SELinux</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/sysconfig/selinux</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для открытия конфигурационного файла <i style="color:rgb(255, 0, 0)">selinux</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">В конфигурационном файле замените строку <i style="color:rgb(255, 0, 0)">SELINUX=enforcing</i> на <i style="color:rgb(255, 0, 0)">SELINUX=disabled</i>. Перед закрытием обязательно сохраните файл!</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Конфигурационный файл <i style="color:rgb(255, 0, 0)">SELinux</i> должен выглядеть следующим образом:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      # This file controls the state of SELinux on the system.<br/>
+      # SELINUX= can take one of these three values:<br/>
+      #       enforcing - SELinux security policy is enforced.<br/>
+      #       permissive - SELinux prints warnings instead of enforcing.<br/>
+      #       disabled - No SELinux policy is loaded.<br/>
+      SELINUX=disabled<br/>
+      # SELINUXTYPE= can take one of these two values:<br/>
+      #       targeted - Targeted processes are protected,<br/>
+      #       mls - Multi Level Security protection.<br/>
+      SELINUXTYPE=targeted</i></th>
+      </tr>
+      <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># reboot</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки <i style="color:rgb(255, 0, 0)">ARM/VM</i>.</i></b></td>
+       </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После перезагрузки вашего устройства, можете снова ввести команду <i style="color:rgb(255, 0, 0)">sestatus</i> и убедиться в том, что у вас отключена система <i style="color:rgb(255, 0, 0)">SELinux</i>.</p></i>
+<table>
+  <tbody>
+  <tr>
+  <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Вывод отключенной системы должен выглядеть вот так:
+  <br/>
+  <br/><i style="color:rgb(162, 0, 255)">
+  SELinux status:                 disabled</i></th>
+  </tr>
+ </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Подключение репозитория ОС <i style="color:rgb(255, 0, 0)">Fedora</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда обновления <i style="color:rgb(255, 0, 0)">EPEL</i>-репозитория.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для дальнейшей настройки <i style="color:rgb(255, 0, 0)">ВМ</i>, обязательно понадобится пакет <i style="color:rgb(255, 0, 0)">wget</i>.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y wget</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакета <i style="color:rgb(255, 0, 0)">wget</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># wget http://rpms.famillecollet.com/enterprise/remi-release-7.rpm</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для скачивания пакета <i style="color:rgb(255, 0, 0)">Remi</i> из репозитория.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># rpm -Uvh remi-release-7.rpm</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Обновление/установка пакета <i style="color:rgb(255, 0, 0)">Remi</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum repolist</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для просмотра всех подключенных репозиториев.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Установка пакета <i style="color:rgb(255, 0, 0)">Apache</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y httpd httpd-devel</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакета <i style="color:rgb(255, 0, 0)">Apache</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl start httpd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для запуска службы <i style="color:rgb(255, 0, 0)">httpd</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable httpd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для добавления службы <i style="color:rgb(255, 0, 0)">httpd</i> в автозапуск ОС.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">6) Установка пакетов <i style="color:rgb(255, 0, 0)">SNMP and RRDTool</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum  install -y net-snmp net-snmp-utils net-snmp-libs rrdtool</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакетов <i style="color:rgb(255, 0, 0)">SNMP</i> и <i style="color:rgb(255, 0, 0)">RRDTool</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl start snmpd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для запуска службы <i style="color:rgb(255, 0, 0)">snmp</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable snmpd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для добавления службы <i style="color:rgb(255, 0, 0)">snmp</i> в автозапуск ОС.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">7) Установка пакетов сервера <i style="color:rgb(255, 0, 0)">MariaDB</i> и первоначальная настройка.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install mariadb-server</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакетов сервера <i style="color:rgb(255, 0, 0)">MariaDB</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl start mariadb</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для запуска службы <i style="color:rgb(255, 0, 0)">mariadb</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable mariadb</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для добавления службы <i style="color:rgb(255, 0, 0)">mariadb</i> в автозапуск ОС.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Далее нужно завершить установку <i style="color:rgb(255, 0, 0)">Mariadb</i> следующей командой: <i style="color:rgb(255, 0, 0)">mysql_secure_installation</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Ответим на следующие вопросы:</th>
+      </tr>
+      <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mysql_secure_installation</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для завершения установки <i style="color:rgb(255, 0, 0)">Mariadb</i>.</i></b></td>
+       </tr>
+      <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Enter current password for root (enter for none):</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Так как пароля для пользователя <i style="color:rgb(255, 0, 0)">root</i> ранее задано не было, на данный вопрос ответьте клавишей <i style="color:rgb(255, 0, 0)">Enter</i>.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Set root password? [Y/n] Y</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Вопрос для установки пароля для пользователя <i style="color:rgb(255, 0, 0)">root</i>.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>New password:</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Строка для ввода нового пароля для пользователя <i style="color:rgb(255, 0, 0)">root</i>.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Re-enter new password:</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Строка для повторения нового пароля для пользователя <i style="color:rgb(255, 0, 0)">root</i>.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Remove anonymous users? [Y/n] Y</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Вопрос для удаления анонимных пользователей.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Disallow root login remotely? [Y/n] Y</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Вопрос запрета удаленного входа под пользователем <i style="color:rgb(255, 0, 0)">root</i>.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Remove test database and access to it? [Y/n] Y</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Вопрос удаления тестовой базы данных и доступа к ней.</i></b></td>
+       </tr>
+       <tr>
+        <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Reload privilege tables now? [Y/n] Y</i></b></td>
+        <td align="Left" style="color:#1100ff" width="600px"><b><i>Вопрос о перезагрузке таблицы привилегий.</i></b></td>
+       </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">8) Установка пакета <i style="color:rgb(255, 0, 0)">PHP</i> и дополнительных для его корректной работы пакетов.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum --enablerepo=remi install -y php-mysql php-pear php-common php-gd php-devel php php-mbstring php-cli php-intl php-snmp</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки набора пакетов, связанных с <i style="color:rgb(255, 0, 0)">PHP</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">9) Создание базы данных для <i style="color:rgb(255, 0, 0)">Cacti</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mysql -u root -p</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для входа в систему по управлению базами данных.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>create database cacti;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания базы данных с наименованием <i style="color:rgb(255, 0, 0)">cacti</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>CREATE USER 'cacti'@'localhost' IDENTIFIED BY 'cacti';</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания пользователя <i style="color:rgb(255, 0, 0)">cacti</i> с паролем <i style="color:rgb(255, 0, 0)">cacti</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>grant all privileges on cacti.* to cacti@localhost;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для предоставления всех привилегий пользователю <i style="color:rgb(255, 0, 0)">cacti</i> для базы данных <i style="color:rgb(255, 0, 0)">cacti</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>FLUSH PRIVILEGES;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда выдачи полных привилегий.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Exit;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для выхода из системы по управлению базами данных.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mysql -u root -p mysql < /usr/share/mysql/mysql_test_data_timezone.sql</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для импортирования базы данных <i style="color:rgb(255, 0, 0)">mysql_test_data_timezone.sql</i> в базу данных <i style="color:rgb(255, 0, 0)">MySQL</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mysql -u root -p</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для входа в систему по управлению базами данных.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>GRANT SELECT ON mysql.time_zone_name TO cacti@localhost;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для предоставления доступа пользователю <i style="color:rgb(255, 0, 0)">cacti</i> до базы данных <i style="color:rgb(255, 0, 0)">mysql.time_zone_name</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>flush privileges;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для сброса привилегий.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Exit;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для выхода из системы по управлению базами данных.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">10) Оптимизация базы данных.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/my.cnf.d/server.cnf</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для редактирования файла <i style="color:rgb(255, 0, 0)">server.cnf</i>.</i></b></td>
+   </tr>
+   <tr>
+    <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">В данном файле, в раздел <i style="color:rgb(255, 0, 0)">[mysqld]</i> нужно добавить следующие строки:
+    <br/>
+    <br/><i style="color:rgb(162, 0, 255)">
+      collation-server = utf8_general_ci<br/>
+      init-connect='SET NAMES utf8'<br/>
+      character-set-server = utf8<br/>
+      max_heap_table_size = 128M<br/>
+      max_allowed_packet = 16777216<br/>
+      tmp_table_size = 64M<br/>
+      join_buffer_size = 64M<br/>
+      innodb_file_per_table = on<br/>
+      innodb_buffer_pool_size = 512M<br/>
+      innodb_doublewrite = off<br/>
+      innodb_additional_mem_pool_size = 80M<br/>
+      innodb_lock_wait_timeout = 50<br/>
+      innodb_flush_log_at_trx_commit = 2</i></th>
+    </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После чего потребуется перезапуск службы <i style="color:rgb(255, 0, 0)">Mariadb</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl restart mariadb.service</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезапуска службы <i style="color:rgb(255, 0, 0)">Mariadb</i>.</i></b></td>
+    </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">11) Установка пакета <i style="color:rgb(255, 0, 0)">yum-utils</i>.</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y yum-utils</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакета c набором инструментов и программ для управления репозиториями yum, установки пакетов отладки, исходных пакетов, расширенной информации из репозиториев и администрирования.</i></b></td>
+    </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">12) Обновление пакетов <i style="color:rgb(255, 0, 0)">PHP</i> с версии <i style="color:rgb(255, 0, 0)">5</i> до более свежей.</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Пока вы не обновите пакеты <i style="color:rgb(255, 0, 0)">PHP</i> с версии <i style="color:rgb(255, 0, 0)">5</i> до более свежей, то у вас не установится пакет <i style="color:rgb(255, 0, 0)">Cacti</i>.</p></i>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># php --version</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для проверки установленной версии <i style="color:rgb(255, 0, 0)">PHP</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># wget -q http://rpms.remirepo.net/enterprise/remi-release-7.rpm</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для скачивания пакета <i style="color:rgb(255, 0, 0)">Remi</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># wget -q https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для скачивания пакета <i style="color:rgb(255, 0, 0)">Epel</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># rpm -i remi-release-7.rpm epel-release-latest-7.noarch.rpm</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакетов <i style="color:rgb(255, 0, 0)">Remi</i> and <i style="color:rgb(255, 0, 0)">Epel</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum-config-manager --enable remi-php70</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для включения репозитория <i style="color:rgb(255, 0, 0)">remi-php70</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum-config-manager --enable remi-php71</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для включения репозитория <i style="color:rgb(255, 0, 0)">remi-php71</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum-config-manager --enable remi-php72</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для включения репозитория <i style="color:rgb(255, 0, 0)">remi-php72</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y php</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для обновления пакета <i style="color:rgb(255, 0, 0)">PHP</i> и его зависимостей.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда подобна выше предложенной.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># php --version</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для проверки установленной версии <i style="color:rgb(255, 0, 0)">PHP</i>.</i></b></td>
+    </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">13) Установка и настройка <i style="color:rgb(255, 0, 0)">Cacti</i>.</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y cacti</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакета <i style="color:rgb(255, 0, 0)">Cacti</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cd /usr/share/doc/cacti-1.2.23/</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перехода в каталог <i style="color:rgb(255, 0, 0)">/usr/share/doc/cacti-1.2.23/</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mysql -u root -p  cacti < cacti.sql</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для импорта <i style="color:rgb(255, 0, 0)">SQL</i>-файла <i style="color:rgb(255, 0, 0)">cacti.sql</i> в созданную нами ранее базу данных.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /usr/share/cacti/include/config.php</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для редактирования конфигурационного файла <i style="color:rgb(255, 0, 0)">cacti "config.php"</i>.</i></b></td>
+    </tr>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Конфигурацию базы данных нужно привести к следующему виду(лишние строчки в этом столбце нужно удалить):
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        $database_type     = 'mysql';<br/>
+        $database_default  = 'cacti';<br/>
+        $database_hostname = 'localhost';<br/>
+        $database_username = 'cacti';<br/>
+        $database_password = 'cacti';<br/>
+        $database_port     = '3306';<br/>
+        $database_ssl      = false;</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">14) Настройка <i style="color:rgb(255, 0, 0)">Cron</i>.</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/cron.d/cacti</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для редактирования файла <i style="color:rgb(255, 0, 0)">Cacti</i> в <i style="color:rgb(255, 0, 0)">Cron</i>.</i></b></td>
+    </tr>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Данный конфигурационный файл приведите к следующему виду:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+        */5 * * * *     apache  /usr/bin/php /usr/share/cacti/poller.php > /dev/null 2>&1</i></th>
+      </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">15) Настройка <i style="color:rgb(255, 0, 0)">Apache</i> для <i style="color:rgb(255, 0, 0)">Cacti</i>.</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/httpd/conf.d/cacti.conf</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для редактирования файла конфигурации <i style="color:rgb(255, 0, 0)">cacti.conf</i>.</i></b></td>
+    </tr>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Center" width="1000px"><i style="color:#1100ff">Данный конфигурационный файл приведите к следующему виду:</th>
+    </tr>
+  </tbody>
+</table>
+<br/>
+<Center>
+  <img src="./15.png" width="450" height="450"/>
+</Center>
+<br/>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/php.ini</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для редактирования конфигурационного файла <i style="color:rgb(255, 0, 0)">php.ini</i>.</i></b></td>
+    </tr>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">;date.timezone =</th>
+    </tr>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Показанную выше сроку нужно привести к следующему виду:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      date.timezone = Asia/Yekaterinburg</i></th>
+    </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После выполнения всех операций, нужно перезагрузить следующие службы:</p></i>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl restart httpd.service</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки службы <i style="color:rgb(255, 0, 0)">httpd</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl restart mariadb.service</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки службы <i style="color:rgb(255, 0, 0)">mariadb</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl restart snmpd.service</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки службы <i style="color:rgb(255, 0, 0)">snmpd</i>.</i></b></td>
+    </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">16) Настройка <i style="color:rgb(255, 0, 0)">Firewall</i>.</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># firewall-cmd --permanent --zone=public --add-service=http</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания постоянного правила, открытия публичной зоне сервиса <i style="color:rgb(255, 0, 0)">http</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># firewall-cmd --reload</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>-Команда для перезагрузки <i style="color:rgb(255, 0, 0)">Firewall</i>.</i></b></td>
+    </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">17) Настройка <i style="color:rgb(255, 0, 0)">Cacti</i> через <i style="color:rgb(255, 0, 0)">Web</i>-интерфейс перед использованием.</p></i></h3>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Откройте веб-браузер и используйте следующий <i style="color:rgb(255, 0, 0)">URL</i>-адрес для доступа к веб-интерфейсу <i style="color:rgb(255, 0, 0)">Cacti</i>: <i style="color:rgb(255, 0, 0)">http://IP-address_Cacti_Сервера/cacti</i>.</p></i></h3>
+<table>
+  <tbody>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Далее нужно:
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      - Принять лицензионное соглашение и нажать кнопку <i style="color:rgb(255, 0, 0)">Начать</i>;<br/>
+      - Пройдите все страницы проверки, нажав кнопку <i style="color:rgb(255, 0, 0)">Далее</i>;<br/>
+      - Сверьте данные в окне <i style="color:rgb(255, 0, 0)">Тип установки</i>, если все данные были введены верно, то нажмите кнопку <i style="color:rgb(255, 0, 0)">Далее</i>;<br/>
+      - Проверьте все бинарные пути и нажмите кнопку <i style="color:rgb(255, 0, 0)">Далее</i>;<br/>
+      - Проверьте разрешения каталогов и нажмите кнопку <i style="color:rgb(255, 0, 0)">Далее</i>;<br/>
+      - В окне <i style="color:rgb(255, 0, 0)">Настройка шаблона</i> вы можете выбрать все шаблоны и нажать кнопку <i style="color:rgb(255, 0, 0)">Готово</i>.</i></th>
+      </tr>
+      <tr>
+        <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">После успешной настройки ПО <i style="color:rgb(255, 0, 0)">Cacti</i>, у вас появится окно авторизации, в котором вам нужно будет ввести следующие данные:
+        <br/>
+        <br/><i style="color:rgb(162, 0, 255)">
+        Username: Admin<br/>
+        Password: Admin</i></th>
+        </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После успешной авторизации вас попросят сменить стандартный пароль на новый. После смены пароля, можете приступать к дальнейшей настройке ПО!</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Как по мне, данное ПО подойдет для мониторинга оборудования в не очень больших организациях. Для более масштабных предприятий рекомендую успользовать что-либо другое.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">На этом инструкция завершена! Спасибо за внимание!)</p></i></h3>
+
+<style>
+.btn:link,
+.btn:visited {
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 15px 40px;
+    display: inline-block;
+    border-radius: 100px;
+    transition: all .2s;
+    position: absolute;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-white {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.btn::after {
+    content: "";
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+    border-radius: 100px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    transition: all .4s;
+}
+
+.btn-white::after {
+    background-color: #ffb7b7;
+}
+
+.btn:hover::after {
+    transform: scaleX(1.4) scaleY(1.6);
+    opacity: 0;
+}
+
+.btn-animated {
+    animation: moveInBottom 5s ease-out;
+    animation-fill-mode: backwards;
+}
+
+@keyframes moveInBottom {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+</style>
+
+<div class="text-box">
+  <a href="https://dimoroz772.github.io/Linux_CentOS/"class="btn btn-white btn-animate">Back</a>
+</div>
