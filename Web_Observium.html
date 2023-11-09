@@ -1,0 +1,476 @@
+<head>
+  <title>Observium</title>
+  <link rel="shortcut icon" href="./CentOS_Logo.png" type="image/png">
+</head>
+ <head>
+  <meta charset="utf-8">
+ </head>
+<style>
+body{
+    background-image: url('Fon_CentOS.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    color: #333;
+}
+a {
+    text-decoration: none;
+}
+p {
+  text-indent: 1.5em;
+  text-align: justify;
+}
+</style>
+<style> 
+  table{
+  border: 1px black solid;
+  }
+  th, td {
+    border: 1px solid grey; /*  бахнуть на rgba(255,255,0,0); */
+  }
+</style>
+  
+<br/>
+<p align="center">
+<Center>
+<img src="./centos-linux.png" width="450" height="150"/>
+</Center>
+</p><br/>
+ <br/>
+ <br/>
+
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Всем привет! В данном посте рассматривается установка и настройка сервера с системой мониторинга <i style="color:rgb(255, 0, 0)">Observium</i> развернутого на ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i>.</p></i></h3>
+<h2><i style="color:rgb(255, 0, 0)"><p align="Center">Все описанные ниже действия в командной строке выполнялись под пользователем root.</p></i></h2>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для реализации данного проекта мне потребовалось:</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Прописать статические <i style="color:rgb(255, 0, 0)">IP</i>-адреса</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Обновить пакеты ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i> до последней версии</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Отключить систему принудительного контроля доступа <i style="color:rgb(255, 0, 0)">SELinux</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Подключить нужные для дальнейшей работы репозитории</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Установить необходимые пакеты для дальнейшей работы</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">6) Настроить базу данных <i style="color:rgb(255, 0, 0)">MySQL</i> для ПО <i style="color:rgb(255, 0, 0)">Observium</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">7) Настроить и запустить ПО <i style="color:rgb(255, 0, 0)">Observium</i> с дальнейшей настройкой зависимостей</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">8) Настроить <i style="color:rgb(255, 0, 0)">Firewall</i></p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">9) Горячие комбинации</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Предисловие:</p></i></h3>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>SELinux</b> — это реализация системы принудительного контроля доступа, которая может работать параллельно с классической избирательной системой контроля доступа.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Remi</b> — это хранилище yum-репозиториев. Хранилище <i style="color:rgb(255, 0, 0)">Remi</i> предоставляет разнообразные <i style="color:rgb(255, 0, 0)">up-to-date</i> пакеты, которые очень полезны или являются необходимыми для многих популярных <i style="color:rgb(255, 0, 0)">Web</i>-сервисов.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Cron</b> — это классический демон, использующийся для периодического выполнения заданий в определённое время. Регулярные действия описываются инструкциями, помещенными в файлы <i style="color:rgb(255, 0, 0)">crontab</i> и в специальные каталоги.</p></i>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Observium</b> — это система мониторинга и наблюдения за сетевыми устройствами и серверами.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Для избежания потери связи с <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, нужно позаботиться о статической <i style="color:rgb(255, 0, 0)">IP</i>-адресации. Её можно настроить как на самой <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, так и на самом сетевом устройстве. Статическую адресацию можно прописать с помощью инструмента командной строки <i style="color:rgb(255, 0, 0)">nmtui</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y NetworkManager-tui</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка пакета nmtui для настройки сети на АРМ/VM.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Гайд по тому, как пользоваться инструментом <i style="color:rgb(255, 0, 0)">nmtui</i>, вы можете посмотреть в интернете.</p></i>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Обновление пакетов системы.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y && yum upgrade -y</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Поиск и обновление пакетов системы.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Отключение системы принудительного контроля доступа <i style="color:rgb(255, 0, 0)">SELinux</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/sysconfig/selinux</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для открытия конфигурационного файла <i style="color:rgb(255, 0, 0)">selinux</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">В конфигурационном файле замените строку <i style="color:rgb(255, 0, 0)">SELINUX=enforcing</i> на <i style="color:rgb(255, 0, 0)">SELINUX=disabled</i>. <h3><i style="color:rgb(255, 0, 0)">Перед закрытием обязательно сохраните файл!</i><h3></p></i>
+<table>
+  <tbody>
+  <tr>
+  <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Конфигурационный файл <i style="color:rgb(255, 0, 0)">SELinux</i> должен выглядеть следующим образом:
+  <br/>
+  <br/><i style="color:rgb(162, 0, 255)">
+    # This file controls the state of SELinux on the system.<br/>
+    # SELINUX= can take one of these three values:<br/>
+    #       enforcing - SELinux security policy is enforced.<br/>
+    #       permissive - SELinux prints warnings instead of enforcing.<br/>
+    #       disabled - No SELinux policy is loaded.<br/>
+    SELINUX=disabled<br/>
+    # SELINUXTYPE= can take one of these two values:<br/>
+    #       targeted - Targeted processes are protected,<br/>
+    #       mls - Multi Level Security protection.<br/>
+    SELINUXTYPE=targeted</i></th>
+  </tr>
+ </tbody>
+</table>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># reboot</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки <i style="color:rgb(255, 0, 0)">ARM/VM</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После перезагрузки вашего устройства, можете снова ввести команду <i style="color:rgb(255, 0, 0)">sestatus</i> и убедиться в том, что у вас отключена система <i style="color:rgb(255, 0, 0)">SELinux</i>.</p></i>
+<table>
+  <tbody>
+  <tr>
+  <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Вывод отключенной системы должен выглядеть вот так:
+  <br/>
+  <br/><i style="color:rgb(162, 0, 255)">
+    SELinux status:                 disabled</i></th>
+  </tr>
+ </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Установка нужных для дальнейшей работы репозиториев.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка репозитория <i style="color:rgb(255, 0, 0)">epel-release-latest-7.noarch.rpm</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y http://yum.opennms.org/repofiles/opennms-repo-stable-rhel7.noarch.rpm</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка репозитория <i style="color:rgb(255, 0, 0)">opennms-repo-stable-rhel7.noarch.rpm</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка репозитория <i style="color:rgb(255, 0, 0)">remi-release-7.rpm</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для обновления пакетов после установки репозиториев.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Установка необходимых пакетов для дальнейшей работы.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y openssh wget.x86_64 httpd.x86_64 php.x86_64 php-opcache.x86_64 php-mysql.x86_64 php-gd.x86_64 php-posix php-pear.noarch cronie.x86_64 net-snmp.x86_64 net-snmp-utils.x86_64 fping.x86_64 mariadb-server.x86_64 mariadb.x86_64 MySQL-python.x86_64 rrdtool.x86_64 subversion.x86_64  jwhois.x86_64 ipmitool.x86_64 graphviz.x86_64 ImageMagick.x86_64 php-sodium.x86_64</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка необходимых пакетов для дальнейшей работы.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Если после выполнения команды не установились некоторые пакеты, то не нужно паниковать! Это все исправится далее.</p></i>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable sshd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для добавления в автозапуск службы <i style="color:rgb(255, 0, 0)">sshd</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl start sshd</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для включения службы <i style="color:rgb(255, 0, 0)">sshd</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y libvirt.x86_64</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда установки пакета <i style="color:rgb(255, 0, 0)">libvirt</i> для добавления возможности отслеживания виртуальных машин.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y yum-utils</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакета <i style="color:rgb(255, 0, 0)">yum-utils</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum-config-manager --enable remi-php71</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для активации репозитория <i style="color:rgb(255, 0, 0)">remi-php71</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum-config-manager --enable php-pecl-libsodium</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для активации репозитория <i style="color:rgb(255, 0, 0)">php-pecl-libsodium</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum-config-manager --enable php-pecl-libsodium2</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для активации репозитория <i style="color:rgb(255, 0, 0)">php-pecl-libsodium2</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для обновления пакетов после активации репозиториев.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y wget.x86_64 httpd.x86_64 php.x86_64 php-opcache.x86_64 php-mysql.x86_64 php-gd.x86_64 php-posix php-pear.noarch cronie.x86_64 net-snmp.x86_64 net-snmp-utils.x86_64 fping.x86_64 mariadb-server.x86_64 mariadb.x86_64 MySQL-python.x86_64 rrdtool.x86_64 subversion.x86_64  jwhois.x86_64 ipmitool.x86_64 graphviz.x86_64 ImageMagick.x86_64 php-sodium.x86_64</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для повторной установки пакетов.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum --enablerepo=remi-php72 install php-sodium</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для активации репозитория <i style="color:rgb(255, 0, 0)">remi-php72</i> и установки пакета <i style="color:rgb(255, 0, 0)">php-sodium</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для обновления пакетов после активации репозитория.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mkdir -p /opt/observium && cd /opt</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания папки <i style="color:rgb(255, 0, 0)">observium</i> и перехода в каталог <i style="color:rgb(255, 0, 0)">/opt/</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># wget http://www.observium.org/observium-community-latest.tar.gz</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для скачивания архива <i style="color:rgb(255, 0, 0)">observium-community-latest.tar.gz</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># tar zxvf observium-community-latest.tar.gz</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для распаковки архива <i style="color:rgb(255, 0, 0)">observium-community-latest.tar.gz</i>.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">6) Настройка базы данных <i style="color:rgb(255, 0, 0)">MySQL</i> для ПО <i style="color:rgb(255, 0, 0)">Observium</i>.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable mariadb</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для добавления в автозапуск службы <i style="color:rgb(255, 0, 0)">mariadb</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl start mariadb</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для включения службы <i style="color:rgb(255, 0, 0)">mariadb</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># /usr/bin/mysqladmin -u root password</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания пароля пользователю <i style="color:rgb(255, 0, 0)">root</i> в системе по управлению базами данных.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mysql -u root -p</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для входа в систему по управлению базами данных.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>CREATE DATABASE observium DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания базы данных <i style="color:rgb(255, 0, 0)">observium</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>GRANT ALL PRIVILEGES ON observium.* TO 'root'@'localhost' IDENTIFIED BY 'LogoP@ssYour';</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для предоставления всех привилегий пользователю <i style="color:rgb(255, 0, 0)">root</i> для базы данных <i style="color:rgb(255, 0, 0)">observium</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>Exit;</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для выхода из системы по управлению базами данных.</i></b></td>
+   </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">7) Настройка и запуск ПО <i style="color:rgb(255, 0, 0)">Observium</i> с дальнейшей настройкой зависимостей.</p></i></h3>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cd observium</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перехода в каталог <i style="color:rgb(255, 0, 0)">observium</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cp config.php.default config.php</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Копирование файла <i style="color:rgb(255, 0, 0)">config.php.default</i> с новым названием <i style="color:rgb(255, 0, 0)">config.php</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano config.php</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для редактирования файла <i style="color:rgb(255, 0, 0)">config.php</i>.</i></b></td>
+   </tr>
+   <tr>
+    <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">В данный файл нужно внести следующие изменения:
+    <br/>
+    <br/><i style="color:rgb(162, 0, 255)">
+      // Database config<br/>
+      $config['db_host'] = 'localhost';<br/>
+      $config['db_user'] = 'root';<br/>
+      $config['db_pass'] = 'LogoP@ssYour';<br/>
+      $config['db_name'] = 'observium';</i><br/>
+      ------------<br/>
+      <i style="color:#1100ff">В конец файла добавить строку:</i> <i style="color:rgb(162, 0, 255)">"/usr/sbin/fping";</i></th>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ./discovery.php -u</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для запуска сценария <i style="color:rgb(255, 0, 0)">discovery.php</i> с ключом обновления <i style="color:rgb(255, 0, 0)">-u</i>, чтобы вставить исходную схему <i style="color:rgb(255, 0, 0)">MySQL</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mkdir rrd</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания папки <i style="color:rgb(255, 0, 0)">rrd</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># chown apache:apache rrd</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для присвоения каталогу <i style="color:rgb(255, 0, 0)">rrd</i> пользователя <i style="color:rgb(255, 0, 0)">apache</i> и группы <i style="color:rgb(255, 0, 0)">apache</i>.</i></b></td>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/httpd/conf.d/observium.conf</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для редактирования файла <i style="color:rgb(255, 0, 0)">observium.conf</i>.</i></b></td>
+    </tr>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Center" width="1000px"><i style="color:#1100ff">В файл <i style="color:rgb(255, 0, 0)">observium.conf</i> нужно внести следующие изменения:</th>
+    </tr>
+  </tbody>
+</table>
+<br/>
+<Center>
+  <img src="./Observium(config).png" width="450" height="250"/>
+</Center>
+<br/>
+<table>
+  <tbody>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># mkdir /opt/observium/logs</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания папки <i style="color:rgb(255, 0, 0)">logs</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># chown apache:apache /opt/observium/logs</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для присвоения каталогу <i style="color:rgb(255, 0, 0)">logs</i> пользователя <i style="color:rgb(255, 0, 0)">apache</i> и группы <i style="color:rgb(255, 0, 0)">apache</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cd /opt/observium</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перехода в каталог <i style="color:rgb(255, 0, 0)">/opt/observium/</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ./adduser.php admin Logo_P@ss_Your 10</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания пользователя <i style="color:rgb(255, 0, 0)">admin</i> с паролем <i style="color:rgb(255, 0, 0)">Logo_P@ss_Your</i> и полными привилегиями для работы в ПО <i style="color:rgb(255, 0, 0)">Observium</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># touch /etc/cron.d/observium</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания файла <i style="color:rgb(255, 0, 0)">observium</i> в каталоге <i style="color:rgb(255, 0, 0)">/etc/cron.d/</i>.</i></b></td>
+   </tr>
+   <tr>
+    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># nano /etc/cron.d/observium</i></b></td>
+    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для редактирования файла <i style="color:rgb(255, 0, 0)">observium</i>.</i></b></td>
+   </tr>
+   <tr>
+    <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">В данный файл нужно вставить следующие строки:
+    <br/>
+    <br/><i style="color:rgb(162, 0, 255)">
+      33 */6 * * * root /opt/observium/discovery.php -h all >> /dev/null 2>&1<br/>
+      */5 * * * * root /opt/observium/discovery.php -h new >> /dev/null 2>&1<br/>
+      */5 * * * * root /opt/observium/poller-wrapper.py 2 >> /dev/null 2>&1</i></th>
+    </tr>
+    <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl restart crond</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезапуска службы <i style="color:rgb(255, 0, 0)">crond</i>.</i></b></td>
+     </tr>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl status crond</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для просмотра статуса службы <i style="color:rgb(255, 0, 0)">crond</i>.</i></b></td>
+     </tr>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable crond</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для добавления в автозапуск службы <i style="color:rgb(255, 0, 0)">crond</i>.</i></b></td>
+     </tr>
+    </tbody>
+  </table>
+  <h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">8) Настройка <i style="color:rgb(255, 0, 0)">Firewall</i>.</p></i></h3>
+<table>
+  <tbody>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl status httpd</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для просмотра статуса службы <i style="color:rgb(255, 0, 0)">httpd</i>.</i></b></td>
+     </tr>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl start httpd</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для запуска службы <i style="color:rgb(255, 0, 0)">httpd</i>.</i></b></td>
+     </tr>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable httpd</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для добавления в автозапуск службы <i style="color:rgb(255, 0, 0)">httpd</i>.</i></b></td>
+     </tr>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># firewall-cmd --permanent --zone=public --add-service=http</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для открытия публичного доступа к сайту с ПО <i style="color:rgb(255, 0, 0)">Observium</i>.</i></b></td>
+     </tr>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># firewall-cmd --reload</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки службы <i style="color:rgb(255, 0, 0)">firewalld</i>.</i></b></td>
+     </tr>
+    </tbody>
+  </table>
+  <i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Чтобы удостовериться в том, что у поднятое ПО <i style="color:rgb(255, 0, 0)">Observium</i> корректно работает, рекомендую выполнить перезагрузку сервера:</p></i>
+  <table>
+    <tbody>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># reboot</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезагрузки сервера.</i></b></td>
+     </tr>
+    </tbody>
+  </table>
+  <h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">9) Горячие комбинации.</p></i></h3>
+  <i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Все описанные ниже команды выполняются в каталоге <i style="color:rgb(255, 0, 0)">/opt/observium</i>.</p></i>
+<table>
+  <tbody>
+     <tr>
+      <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># cd /opt/observium/</i></b></td>
+      <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перехода в каталог Observium.</i></b></td>
+     </tr>
+    <tr>
+      <th style="color:#ff0000" colspan="2" align="Left" width="1000px"><i style="color:#1100ff">Команды для опроса добавленного сервера/сетевого устройства в ПО <i style="color:rgb(255, 0, 0)">Observium(на тот случай, чтобы не жадть пока отработает служба "crond")</i>.
+      <br/>
+      <br/><i style="color:rgb(162, 0, 255)">
+      # ./discovery.php -h all<br/>
+      # ./poller.php -h all</i></th>
+    </tr>
+  </tbody>
+</table>
+<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">На этом инструкция завершена! Спасибо за внимание!)</p></i></h3>
+
+<style>
+.btn:link,
+.btn:visited {
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 15px 40px;
+    display: inline-block;
+    border-radius: 100px;
+    transition: all .2s;
+    position: absolute;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-white {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.btn::after {
+    content: "";
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+    border-radius: 100px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    transition: all .4s;
+}
+
+.btn-white::after {
+    background-color: #ffb7b7;
+}
+
+.btn:hover::after {
+    transform: scaleX(1.4) scaleY(1.6);
+    opacity: 0;
+}
+
+.btn-animated {
+    animation: moveInBottom 5s ease-out;
+    animation-fill-mode: backwards;
+}
+
+@keyframes moveInBottom {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+</style>
+
+<div class="text-box">
+  <a href="https://dimoroz772.github.io/Linux_CentOS/"class="btn btn-white btn-animate">Back</a>
+</div>
