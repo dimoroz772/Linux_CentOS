@@ -13,3 +13,7 @@
 <i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Cacti"><b>Cacti</b></a><br/><i/>
  <br/>
 <i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Observium"><b>Observium</b></a><br/><i/>
+  <br/>
+<i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Install_Zabbix_Server_4.2"><b>Install Zabbix Server 4.2</b></a><br/><i/>
+  <br/>
+<i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Updating_Zabbix_version_from_4.2_to_5.0"><b>Updating Zabbix version from 4.2 to 5.0</b></a><br/><i/>
