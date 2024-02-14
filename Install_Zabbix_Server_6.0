@@ -73,6 +73,8 @@ DirectoryIndex index.html index.php index.cgi |#|#| строка 169: допис
                             |#|#|  --- добавить данные строки в конец файла
 ServerTokens Prod           |#|#| /
 ------------
+systemctl enable --now httpd |#|#| Команда для запуска указанного юнита и добавления службы "httpd" в автозагрузку
+------------
 firewall-cmd --add-service=http |#|#| Команда для открытия доступа трафику через протокол HTTP
 firewall-cmd --runtime-to-permanent |#|#| Команда для сохранения конфигурации на межсетевом экране
 ------------
