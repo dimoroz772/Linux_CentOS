@@ -21,3 +21,5 @@
 <i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Install_Zabbix_Server_6.0"><b>Install Zabbix Server 6.0</b></a><br/><i/>
   <br/>
 <i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Install_Zabbix_Server_7.0"><b>Install Zabbix Server 7.0</b></a><br/><i/>
+  <br/>
+<i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Install_Grafana"><b>Install Grafana</b></a><br/><i/>
