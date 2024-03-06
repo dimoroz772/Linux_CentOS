@@ -25,3 +25,5 @@
 <i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Install_Grafana"><b>Install Grafana</b></a><br/><i/>
   <br/>
 <i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Installing_Zabbix_plugin_in_Grafana"><b>Installing Zabbix plugin in Grafana</b></a><br/><i/>
+  <br/>
+<i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/main/Install_GLPI_10.0.6%2BPlugins"><b>Install_GLPI_10.0.6+Plugins</b></a><br/><i/>
