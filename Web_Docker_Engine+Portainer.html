@@ -1,300 +1,165 @@
 <head>
-  <title>Docker_Engine+Portainer</title>
+  <title>Docker Engine + Portainer</title>
   <link rel="shortcut icon" href="./CentOS_Logo.png" type="image/png">
 </head>
  <head>
   <meta charset="utf-8">
  </head>
 <style>
+.neonText {
+  color: #87CEFA;
+  text-shadow:
+      0 0 1px #4169E1,
+      0 0 1px #4169E1,
+      0 0 1px #4169E1,
+      0 0 1px #4169E1,
+      0 0 1px #4169E1,
+      0 0 1px #4169E1,
+      0 0 1px #4169E1,
+      0 0 1px #4169E1;
+}
+/* Additional styling */
 body{
-    background-image: url('Fon_CentOS.jpg');
+    background-color: black;
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
-    max-width: 1000px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
-    color: #333;
+    color: #cfcfcf;
 }
 a {
     text-decoration: none;
 }
 p {
   text-indent: 1.5em;
-  text-align: justify;
+  font-family: monospace;
+  font-weight: 500;
+  white-space: pre;
+  line-height: 2;
+  letter-spacing: 1px;
 }
 </style>
-<style> 
-  table{
-  border: 1px black solid;
-  }
-  th, td {
-    border: 1px solid grey; /*  бахнуть на rgba(255,255,0,0); */
-  }
-</style>
-  
-  
-<br/>
-<p align="center">
-<Center>
-<img src="./centos-linux.png" width="450" height="150"/>
-</Center>
-</p><br/>
- <br/>
- <br/>
+<div class="container">
+<p class="neonText">
+Установка/настройка работы связки Docker Engine + Portainer на ОС Linux CentOS 7
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Все описанные ниже действия выполнялись под пользователем root
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Всем привет! Для реализации данного проекта мне потребовалось:
 
+1) Установить ОС Linux CentOS 7 и обновить все пакеты;
+2) Прописать статическую IP-адресацию;
+3) Установить Docker;
+4) Теория и основные команды Docker;
+5) Установить Portainer.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Предисловие:
+------------
+NMTUI - это инструмент командной строки, который используется для настройки сети в системах Gnu / Linux. При запуске он вызывает графический текстовый интерфейс, который помогает 
+пользователям легко и эффективно настраивать сетевые интерфейсы.
+------------
+Docker — программное обеспечение для автоматизации развёртывания и управления приложениями в средах с поддержкой контейнеризации, контейнеризатор приложений.
+------------
+Portainer — это простой и удобный веб-интерфейс для управления Docker-контейнерами. С помощью Portainer вы сможете в несколько кликов запустить на вашем сервере готовые контейнеры 
+с популярным ПО и связать их между собой.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1) Перед началом выполнения каких-либо манипуляций по настройке связки Docker + Portainer, нужно выполнить подготовку ОС Linux CentOS 7. Для начала обновим пакеты системы.
+------------
+yum update -y && yum upgrade -y |#|#| Поиск и обновление пакетов системы
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2) Также для избежания потери связи с АРМ/VM, нужно позаботиться о статической IP-адресации. Её можно настроить как на самой АРМ/VM, так и на самом сетевом устройстве.
+Статическую адресацию можно прописать с помощью инструмента командной строки nmtui.
+------------
+yum install -y NetworkManager-tui |#|#| Установка пакета nmtui для настройки сети на АРМ/VM
+------------
+Гайд по тому, как пользоваться инструментом nmtui, вы можете посмотреть в интернете.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3) Для дальнейшей работы, нам понадобится пакет "yum-utils"
+------------
+yum install -y yum-utils |#|#| Команда для установки пакета "yum-utils"
+------------
+yum-config-manager --enable extras |#|#| Команда для включения репозитория "extras" с дополнениями
+------------
+yum repolist |#|#| Команда для просмотра включенных репозиториев(должен появится extras)
+------------
+yum install -y device-mapper-persistent-data lvm2 |#|#| Команда установки дополнительных пакетов
+------------
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo |#|#| Команда для добавления репозитория Docker
+------------
+yum install -y docker-ce |#|#| Команда для установки пакета "docker-ce"
+------------
+systemctl start docker |#|#| Команда запуска Docker
+------------
+systemctl enable docker |#|#| Команда добавления службы "docker" в автозагрузку
+------------
+usermod -aG docker root |#|#| Команда для создания пользователя "root" в группу "docker". Вместо пользователя "root", вы можете выбрать любого другого
+------------
+После все проведенных манипуляции, нужно отправить VM в перезагрузку
+------------
+reboot |#|#| Команда перезагрузки VM
+------------
+После включения VM, проверьте работоспособность Docker
+------------
+systemctl status docker |#|#| Команда проверки состояния службы "docker.service"
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4) Теория и основные команды Docker.
+------------
+Запуск контейнера из образа осуществляется командой "docker run" с указанием разнообразных ключей и нужного образа.
+------------
+Вот некоторые полезные ключи команды docker run:
 
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Всем привет! В данном посте рассматривается установка и настройка работоспособности связки <i style="color:rgb(255, 0, 0)">Docker_Engine+Portainer</i> на ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i>.</p></i></h3>
-<h2><i style="color:rgb(255, 0, 0)"><p align="Center">Все описанные ниже действия в командной строке выполнялись под пользователем root.</p></i></h2>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Для реализации данного проекта мне потребовалось:</p></i></h3>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Установить ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i> и обновить все пакеты</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Прописать статическую <i style="color:rgb(255, 0, 0)">IP</i>-адресацию</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Установить <i style="color:rgb(255, 0, 0)">Docker</i></p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Теория и основные команды <i style="color:rgb(255, 0, 0)">docker</i>-a</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Установить <i style="color:rgb(255, 0, 0)">Portainer</i></p></i>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Предисловие:</p></i></h3>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>NMTUI</b> - это инструмент командной строки, который используется для настройки сети в системах <i style="color:rgb(255, 0, 0)">Gnu/Linux</i>. При запуске он вызывает графический текстовый интерфейс, который помогает пользователям легко и эффективно настраивать сетевые интерфейсы.</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Docker</b> - это программное обеспечение для автоматизации развёртывания и управления приложениями в средах с поддержкой контейнеризации, контейнеризатор приложений.</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>Portainer</b> - это простой и удобный веб-интерфейс для управления <i style="color:rgb(255, 0, 0)">Docker</i>-контейнерами. С помощью <i style="color:rgb(255, 0, 0)">Portainer</i> вы сможете в несколько кликов запустить на вашем сервере готовые контейнеры с популярным ПО и связать их между собой.</p></i>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">1) Перед началом выполнения каких-либо манипуляций по настройке связки <i style="color:rgb(255, 0, 0)">Docker+Portainer</i>, нужно выполнить подготовку ОС <i style="color:rgb(255, 0, 0)">Linux CentOS 7</i>. Для начала обновим пакеты системы.</p></i></h3>
-<table>
-  <tbody>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum update -y && yum upgrade -y</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Поиск и обновление пакетов системы.</i></b></td>
-   </tr>
-  </tbody>
-</table>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">2) Также для избежания потери связи с <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, нужно позаботиться о статической <i style="color:rgb(255, 0, 0)">IP</i>-адресации. Её можно настроить как на самой <i style="color:rgb(255, 0, 0)">АРМ/VM</i>, так и на самом сетевом устройстве. Статическую адресацию можно прописать с помощью инструмента командной строки <i style="color:rgb(255, 0, 0)">nmtui</i>.</p></i></h3>
-<table>
-  <tbody>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y NetworkManager-tui</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Установка пакета <i style="color:rgb(255, 0, 0)">nmtui</i> для настройки сети на <i style="color:rgb(255, 0, 0)">АРМ/VM</i>.</i></b></td>
-   </tr>
-  </tbody>
-</table>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Гайд по тому, как пользоваться инструментом <i style="color:rgb(255, 0, 0)">nmtui</i>, вы можете посмотреть в интернете.</p></i>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">3) Для дальнейшей работы нам понадобится пакет <i style="color:rgb(255, 0, 0)">yum-utils</i>.</p></i></h3>
-<table>
-  <tbody>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y yum-utils</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакета <i style="color:rgb(255, 0, 0)">yum-utils</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum-config-manager --enable extras</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для включения репозитория <i style="color:rgb(255, 0, 0)">extras</i> с дополнениями.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum repolist</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для просмотра включенных репозиториев<i style="color:rgb(255, 0, 0)">(должен появится extras)</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y device-mapper-persistent-data lvm2</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда установки дополнительных пакетов.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для добавления репозитория <i style="color:rgb(255, 0, 0)">Docker</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># yum install -y docker-ce</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для установки пакета <i style="color:rgb(255, 0, 0)">docker-ce</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl start docker</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда запуска <i style="color:rgb(255, 0, 0)">docker</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl enable docker</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда добавления службы <i style="color:rgb(255, 0, 0)">docker</i> в автозагрузку.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># usermod -aG docker root</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания пользователя <i style="color:rgb(255, 0, 0)">root</i> в группу <i style="color:rgb(255, 0, 0)">docker</i>. Вместо пользователя <i style="color:rgb(255, 0, 0)">root</i>, вы можете выбрать любого другого.</i></b></td>
-   </tr>
-  </tbody>
-</table>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После все проведенных манипуляции, нужно отправить <i style="color:rgb(255, 0, 0)">VM</i> в перезагрузку.</p></i>
-<table>
-  <tbody>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># reboot</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда перезагрузки <i style="color:rgb(255, 0, 0)">VM</i>.</i></b></td>
-   </tr>
-  </tbody>
-</table>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После включения <i style="color:rgb(255, 0, 0)">VM</i>, проверьте работоспособность <i style="color:rgb(255, 0, 0)">docker</i>.</p></i>
-<table>
-  <tbody>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># systemctl status docker</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда проверки состояния службы <i style="color:rgb(255, 0, 0)">docker.service</i>.</i></b></td>
-   </tr>
-  </tbody>
-</table>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">4) Теория и основные команды <i style="color:rgb(255, 0, 0)">docker</i>.</p></i></h3>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Запуск контейнера из образа осуществляется командой <i style="color:rgb(255, 0, 0)">docker run</i> с указанием разнообразных ключей и нужного образа.</p></i>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Вот некоторые полезные ключи команды <i style="color:rgb(255, 0, 0)">docker run</i>:</p></i></h3>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>-t</b> — предоставляет доступ к терминалу внутри контейнера.</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>-i</b> — делает возможным взаимодействие с терминалом внутри контейнера.</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>-d</b> — запускает контейнер в фоновом режиме. Это позволяет использовать терминал, из которого запущен контейнер, для выполнения других команд во время работы контейнера.</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>--rm</b> — автоматическое удаление контейнера после завершения его работы.</p></i>
-<table>
-  <tbody>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker version</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для проверки версии <i style="color:rgb(255, 0, 0)">docker</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker run -dit --restart always httpd</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда запуска контейнера с политикой перезагрузки всегда, когда контейнер остановится.</i></b></td>
-   </tr>
-  </tbody>
-</table>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Также, кроме флага <i style="color:rgb(255, 0, 0)">always</i>, есть ещё несколько, которые можно указать в аргументе с <i style="color:rgb(255, 0, 0)">--restart</i>:</p></i></h3>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>no</b> — это значение по умолчанию, это означает, что контейнеры не будут перезапущены.</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>on-failure</b> — это перезапустит контейнет в случае возникновения ошибки и сбоя контейнера.</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>always</b> — всегда перезапускайте контейнер, если он останавливается.</p></i>
-<i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><b>unless-stopped</b> — контейнер всегда будет перезапускаться, если он не был остановлен вручную.</p></i>
-<table>
-  <tbody>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker run hello-world</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Запуск контейнера <i style="color:rgb(255, 0, 0)">hello-world</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker ps -a</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Очень подробная информация об установленных/настроенных контейнерах.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker image ls</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для просмотра установленных контейнеров.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker info</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Общая информация о <i style="color:rgb(255, 0, 0)">docker</i>-e.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker start "имя/id контейнера"</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда запуска контейнера.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker stop "имя/id контейнера"</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для отсановки контейнера.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker restart "имя/id контейнера"</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для перезапуска контейнера.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker rm "имя/id контейнера"</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для удаления контейнера.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker update --restart on-failure "имя/id контейнера"</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Для контейнера <i style="color:rgb(255, 0, 0)">Portainer</i>, настоятельно рекомендую прописать данную конмаду, т.к. после перезагрузки <i style="color:rgb(255, 0, 0)">VM</i>, <i style="color:rgb(255, 0, 0)">Portainer</i> может не запуститься, так как при запуске может выдавать ошибки.</i></b></td>
-   </tr>
-  </tbody>
-</table>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">5) Установка/настройка <i style="color:rgb(255, 0, 0)">Portainer</i>.</p></i></h3>
-<table>
-  <tbody>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker volume create portainer_data</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания тома для <i style="color:rgb(255, 0, 0)">Portainer</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для создания контейнера и загрузки из репозитория образа <i style="color:rgb(255, 0, 0)">Portainer</i>.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i>ПОВТОРЮСЬ: # docker update --restart on-failure "имя/id контейнера"</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Для контейнера <i style="color:rgb(255, 0, 0)">Portainer</i>, настоятельно рекомендую прописать данную конмаду, т.к. после перезагрузки <i style="color:rgb(255, 0, 0)">VM</i>, <i style="color:rgb(255, 0, 0)">Portainer</i> может не запуститься, так как при запуске может выдавать ошибки.</i></b></td>
-   </tr>
-   <tr>
-    <td align="Left" style="color:rgb(162, 0, 255)" width="400px"><b><i># ip a</i></b></td>
-    <td align="Left" style="color:#1100ff" width="600px"><b><i>Команда для просмотра <i style="color:rgb(255, 0, 0)">IP</i>-адресов на сетевых интерфейсах.</i></b></td>
-   </tr>
-  </tbody>
-</table>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">После того, как вы узнали свой <i style="color:rgb(255, 0, 0)">IP</i>-address, то теперь вы можете открыть веб-браузер и посетить следующий сайт:</p></i></h3>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left"><i style="color:rgb(255, 0, 0)">http://IP-address:9000</i></p></i></h3>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">Далее создаём пользователя, логинимся, выбираем локальную среду управления и наслаждаемся функционалом <i style="color:rgb(255, 0, 0)">Portainer</i>.</p></i></h3>
-<h3><i style="color:rgba(0, 0, 0, 0.644)"><p align="Left">На этом инструкция закончена! Спасибо за внимание!)</p></i></h3>
+-t — предоставляет доступ к терминалу внутри контейнера;
+-i — делает возможным взаимодействие с терминалом внутри контейнера;
+-d — запускает контейнер в фоновом режиме. Это позволяет использовать терминал, из которого запущен контейнер, для выполнения других команд во время работы контейнера;
+--rm — автоматическое удаление контейнера после завершения его работы.
+------------
+docker version |#|#| Команда для проверки версии Docker
+------------
+docker run -dit --restart always httpd |#|#| Команда запуска контейнера с политикой перезагрузки всегда, когда контейнер остановится.
+Также, кроме флага "always", есть ещё несколько, которые можно указать в аргументе с "--restart":
 
-<style>
-
-.btn:link,
-.btn:visited {
-    text-transform: uppercase;
-    text-decoration: none;
-    padding: 15px 40px;
-    display: inline-block;
-    border-radius: 100px;
-    transition: all .2s;
-    position: absolute;
-}
-
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-}
-
-.btn:active {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-}
-
-.btn-white {
-    background-color: #ffffff;
-    color: #000000;
-}
-
-.btn::after {
-    content: "";
-    display: inline-block;
-    height: 100%;
-    width: 100%;
-    border-radius: 100px;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    transition: all .4s;
-}
-
-.btn-white::after {
-    background-color: #ffb7b7;
-}
-
-.btn:hover::after {
-    transform: scaleX(1.4) scaleY(1.6);
-    opacity: 0;
-}
-
-.btn-animated {
-    animation: moveInBottom 5s ease-out;
-    animation-fill-mode: backwards;
-}
-
-@keyframes moveInBottom {
-    0% {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translateY(0px);
-    }
-}
-</style>
-
-
-
-
-<div class="text-box">
-  <a href="https://dimoroz772.github.io/Linux_CentOS/"class="btn btn-white btn-animate">Back</a>
+no - Это значение по умолчанию, это означает, что контейнеры не будут перезапущены;
+on-failure - Это перезапустит контейнет в случае возникновения ошибки и сбоя контейнера;
+always - Всегда перезапускайте контейнер, если он останавливается;
+unless-stopped - Контейнер всегда будет перезапускаться, если он не был остановлен вручную.
+------------
+docker run hello-world |#|#| Запуск контейнера "hello-world"
+------------
+docker ps -a |#|#| Очень подробная информация об установленных/настроенных контейнерах
+------------
+docker image ls |#|#| Команда для просмотра установленных контейнеров
+------------
+docker info |#|#| Общая информация о Docker
+------------
+docker start "имя/id контейнера" |#|#| Команда запуска контейнера
+------------
+docker stop "имя/id контейнера" |#|#| Команда для отсановки контейнера
+------------
+docker restart "имя/id контейнера" |#|#| Команда для перезапуска контейнера
+------------
+docker rm "имя/id контейнера" |#|#| Команда для удаления контейнера
+------------
+docker update --restart on-failure "имя/id контейнера" |#|#| Для контейнера "Portainer", настоятельно рекомендую прописать данную конмаду, т.к. после перезагрузки VM, Portainer может
+не запуститься, так как при запуске может выдавать ошибки
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5) Установка/настройка Portainer.
+------------
+docker volume create portainer_data |#|#| Команда для создания тома для "Portainer"
+------------
+docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer |#|#| Команда для создания контейнера и загрузки из репозитория
+образа "Portainer"
+------------
+ПОВТОРЮСЬ: docker update --restart on-failure "имя/id контейнера" |#|#| Для контейнера "Portainer", настоятельно рекомендую прописать данную конмаду, т.к. после перезагрузки VM, Portainer
+может не запуститься, так как при запуске может выдавать ошибки
+------------
+ip a |#|#| Команда для просмотра ip-адресов на сетевых интерфейсах
+------------
+После того, как вы узнали свой IP-address, то теперь вы можете открыть веб-браузер и посетить следующий сайт:
+http://IP-address:9000 
+Далее создаём пользователя, логинимся, выбираем локальную среду управления и наслаждаемся функционалом Portainer.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+На этом инструкция закончена! Спасибо за внимание!)
+</p>
 </div>
