@@ -6,7 +6,7 @@
   <meta charset="utf-8">
  </head>
 <style>
-.neonText {
+.neonText1 {
   color: #87CEFA;
   text-shadow:
       0 0 1px #4169E1,
@@ -17,6 +17,18 @@
       0 0 1px #4169E1,
       0 0 1px #4169E1,
       0 0 1px #4169E1;
+}
+.neonText2 {
+  color: #00FF00;
+  text-shadow:
+      0 0 1px #006400,
+      0 0 1px #006400,
+      0 0 1px #006400,
+      0 0 1px #006400,
+      0 0 1px #006400,
+      0 0 1px #006400,
+      0 0 1px #006400,
+      0 0 1px #006400;
 }
 /* Additional styling */
 body{
@@ -42,347 +54,344 @@ p {
 }
 </style>
 <div class="container">
-<p class="neonText">
-  Развертывание системы централизованного журналирования сетевых устройств на ОС Linux CentOS 7
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Все описанные ниже действия выполнялись под пользователем root
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Всем привет! Для реализации данного проекта мне потребовалось:
+<p class="neonText1">
+Развертывание системы централизованного журналирования сетевых устройств на ОС Linux CentOS 7
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Все описанные ниже действия выполнялись под пользователем root
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Всем привет! Для реализации данного проекта мне потребовалось:
 
-  1) Обновить пакеты ОС Linux CentOS 7 до последней версии;
-  2) Прописать статические IP-адреса;
-  3) Выключить систему принудительного контроля доступа SELinux;
-  4) Установить необходимые пакеты/компоненты;
-  5) Настроить базу данных(MySQL) для Rsyslog;
-  6) Скачать и установить ПО LogAnalyzer;
-  7) Запустить Web-установщик LogAnalyzer и подключить к созданной базе данных;
-  8) Подключить сетевое устройство к Rsyslog;
-  9) Подробнее о чистке базы данных LogAnalyzer.
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Предисловие:
-  ------------
-  LogAnalyzer - это программное обеспечение, устанавливаемое как правило на сервер, которое с определённой периодичностью собирает накопленные узлом журналы сервера, 
-  обрабатывающее данные из них, хранящее извлечённые данные во внутреннем архиве или базе данных, и создающее страницы, показывающие статистическую информацию конечным пользователям.
-  ------------
-  Rsyslog - это это программная утилита с открытым исходным кодом, используемая в UNIX и Unix-подобных компьютерных системах для пересылки сообщений журнала в сети.
-  ------------
-  MySQL - это свободная реляционная система управления базами данных.
-  ------------
-  MariaDB — это ответвление от системы управления базами данных MySQL, разрабатываемое сообществом под лицензией GNU GPL.
-  ------------
-  NMTUI - это инструмент командной строки, который используется для настройки сети в системах Gnu/Linux. При запуске он вызывает графический текстовый интерфейс, который помогает 
-  пользователям легко и эффективно настраивать сетевые интерфейсы.
-  ------------
-  SELinux - это система принудительного контроля доступа, реализованная на уровне ядра.
-  ------------
-  Nano - это консольный текстовый редактор для UNIX и Unix-подобных операционных систем, основанный на библиотеке curses и распространяемый под лицензией GNU GPL.
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  1) Перед началом выполнения каких-либо манипуляций по настройке связки Rsyslog+LogAnalyzer+MySQL, нужно выполнить подготовку ОС Linux CentOS 7. Для начала обновим пакеты системы.
-  ------------
-  yum update -y && yum upgrade -y |#|#| Поиск и обновление пакетов системы
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  2) Также для избежания потери связи с АРМ/VM, нужно позаботиться о статической IP-адресации. Её можно настроить как на самой АРМ/VM, так и на самом сетевом устройстве.
-  Статическую адресацию можно прописать с помощью инструмента командной строки nmtui.
-  ------------
-  yum install -y NetworkManager-tui |#|#| Установка пакета nmtui для настройки сети на АРМ/VM
-  ------------
-  Гайд по тому, как пользоваться инструментом nmtui, вы можете посмотреть в интернете.
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  3) После настройки сети, нужно ОБЯЗАТЕЛЬНО отключить систему контроля доступа SELinux НАВСЕГДА. Если данную систему не выключить, то после настройки LogAnalyzer, в нём же у вас все время 
-  будут сыпаться следующие ошибки:
-  
-  1) file './...]': open error: Permission denied [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2433 ]
-  2) action 'action 7' resumed (module 'builtin:omfile') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]
-  3) file './...]': open error: Permission denied [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2433 ]
-  4) action 'action 8' resumed (module 'builtin:omfile') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]
-  5) action 'action 9' resumed (module 'ommysql') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]
-  ------------
-  sestatus |#|#| Команда для проверки статуса SELinux
-  ------------
-  Откройте config-файл по пути: /etc/selinux/
-  Для редактирования файла можно воспользоваться консольным текстовым редактором nano. По тому как им пользоваться, всю информацию можно найти в интернете.
-  ------------
-  nano /etc/selinux/config |#|#| Команда для открытия и редактирования конфигурационного файла SELinux
-  ------------
-  Конфигурационный файл SELinux должен выглядеть следующим образом:
-  
-  # This file controls the state of SELinux on the system.
-  # SELINUX= can take one of these three values:
-  #       enforcing - SELinux security policy is enforced.
-  #       permissive - SELinux prints warnings instead of enforcing.
-  #       disabled - No SELinux policy is loaded.
-  SELINUX=disabled
-  # SELINUXTYPE= can take one of these two values:
-  #       targeted - Targeted processes are protected,
-  #       mls - Multi Level Security protection.
-  SELINUXTYPE=targeted
-  
-  ------------
-  После внесённых изменений, сохраняем файл, выходим из консольного текстового редактора и отправляем АРМ/VM в перезагрузку
-  ------------
-  reboot |#|#| Команда для перезагрузки АРМ/VM
-  ------------
-  После перезагрузки вашего устройства, можете снова ввести команду "sestatus" и убедиться в том, что у вас отключена система SELinux.
-  Вывод отключенной системы должен выглядеть вот так: 
-  
-  SELinux status:                 disabled
-  
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  4) Установка и включение необходимых пакетов/компонентов.
-  ------------
-  yum install -y httpd php php-mysql wget mariadb-server rsyslog-mysql |#|#| Команда для установки необходимых пакетов
-  ------------
-  systemctl enable httpd && systemctl start httpd |#|#| Команда для включения сервиса httpd в автозагрузку и запуска сервиса httpd
-  ------------
-  systemctl enable mariadb && systemctl start mariadb |#|#| Команда для включения сервиса mariadb в автозагрузку и запуска сервиса mariadb
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  5) Настройка базы данных(MySQL) для Rsyslog.
-  !!! Изначально, в базе данных MySQL, у пользователя root пароль не назначен. Поэтому, когда система попросит вас ввести пароль, просто нажмите Enter!!! 
-  !!! Также, когда вы работаете в системе MariaDB, то после того, как вы полностью ввели команду, ОБЯЗАТЕЛЬНО нужно поставить в конце символ ";"!!!
-  ------------
-  mysql -u root -p < /usr/share/doc/rsyslog-8.24.0/mysql-createDB.sql |#|#| Команда для импортации схемы базы данных Rsyslog, предложенной по умолчанию
-  ------------
-  mysql -u root -p |#|#| Команда подключения к системе MariaDB, для управления базами данных MySQL
-  ------------
-  GRANT ALL ON Syslog.* TO 'rsyslog'@'localhost' IDENTIFIED BY 'Password'; |#|#| Команда создания пользователя "Rsyslog" с паролем "Password" для доступа к базе данных Syslog. Пароль
-  можете придумать свой.
-  ------------
-  FLUSH PRIVILEGES; |#|#| Команда для того, чтобы задать привилегии пользователя путем непосредственного внесения изменений в таблицы назначения привилегий
-  ------------
-  exit |#|#| Команда выхода из системы MariaDB
-  ------------
-  cp /etc/rsyslog.conf /etc/rsyslog.conf.org |#|#| Данной командой сделайте копию файла rsyslog.conf и поменяйте ему название на rsyslog.conf.org
-  ------------
-  Далее откройте файл rsyslog.conf в текстовом редакторе и раскомментируйте следующие строки:
-  
-  $ModLoad imudp
-  $UDPServerRun 514
-  
-  $ModLoad imtcp
-  $InputTCPServerRun 514
-  
-  ------------
-  На всякий случай выложу конфиг файла rsyslog.conf:
-  
-  # rsyslog configuration file
-  
-  # For more information see /usr/share/doc/rsyslog-*/rsyslog_conf.html
-  # If you experience problems, see http://www.rsyslog.com/doc/troubleshoot.html
-  
-  #### MODULES ####
-  
-  # The imjournal module bellow is now used as a message source instead of imuxsock.
-  $ModLoad imuxsock # provides support for local system logging (e.g. via logger command)
-  $ModLoad imjournal # provides access to the systemd journal
-  #$ModLoad imklog # reads kernel messages (the same are read from journald)
-  #$ModLoad immark  # provides --MARK-- message capability
-  
-  # Provides UDP syslog reception
-  $ModLoad imudp
-  $UDPServerRun 514
-  
-  # Provides TCP syslog reception
-  $ModLoad imtcp
-  $InputTCPServerRun 514
-  
-  
-  #### GLOBAL DIRECTIVES ####
-  
-  # Where to place auxiliary files
-  $WorkDirectory /var/lib/rsyslog
-  
-  # Use default timestamp format
-  $ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
-  
-  # File syncing capability is disabled by default. This feature is usually not required,
-  # not useful and an extreme performance hit
-  #$ActionFileEnableSync on
-  
-  # Include all config files in /etc/rsyslog.d/
-  $IncludeConfig /etc/rsyslog.d/*.conf
-  
-  # Turn off message reception via local log socket;
-  # local messages are retrieved through imjournal now.
-  $OmitLocalLogging on
-  
-  # File to store the position in the journal
-  $IMJournalStateFile imjournal.state
-  
-  
-  #### RULES ####
-  
-  # Log all kernel messages to the console.
-  # Logging much else clutters up the screen.
-  #kern.*                                                 /dev/console
-  
-  # Log anything (except mail) of level info or higher.
-  # Don't log private authentication messages!
-  *.info;mail.none;authpriv.none;cron.none                /var/log/messages
-  
-  # The authpriv file has restricted access.
-  authpriv.*                                              /var/log/secure
-  
-  # Log all the mail messages in one place.
-  mail.*                                                  -/var/log/maillog
-  
-  
-  # Log cron stuff
-  cron.*                                                  /var/log/cron
-  
-  # Everybody gets emergency messages
-  *.emerg                                                 :omusrmsg:*
-  
-  # Save news errors of level crit and higher in a special file.
-  uucp,news.crit                                          /var/log/spooler
-  
-  # Save boot messages also to boot.log
-  local7.*                                                /var/log/boot.log
-  
-  
-  # ### begin forwarding rule ###
-  # The statement between the begin ... end define a SINGLE forwarding
-  # rule. They belong together, do NOT split them. If you create multiple
-  # forwarding rules, duplicate the whole block!
-  # Remote Logging (we use TCP for reliable delivery)
-  #
-  # An on-disk queue is created for this action. If the remote host is
-  # down, messages are spooled to disk and sent when it is up again.
-  #$ActionQueueFileName fwdRule1 # unique name prefix for spool files
-  #$ActionQueueMaxDiskSpace 1g   # 1gb space limit (use as much as possible)
-  #$ActionQueueSaveOnShutdown on # save messages to disk on shutdown
-  #$ActionQueueType LinkedList   # run asynchronously
-  #$ActionResumeRetryCount -1    # infinite retries if host is down
-  # remote host is: name/ip:port, e.g. 192.168.0.1:514, port optional
-  #*.* @@remote-host:514
-  # ### end of the forwarding rule ###
-  
-  #[...]
-  # Load the MySQL Module
-  module(load="ommysql")
-  #[...]
-  #*.* :ommysql:127.0.0.1,Syslog_Database,syslog_user,password
-  *.* :ommysql:127.0.0.1,Syslog,rsyslog,Password
-  
-  $template RemoteLogs,"/var/log/rsyslog/%HOSTNAME%/%PROGRAMNAME%.log"
-  *.* ?RemoteLogs
-  & ~
-  
-  ------------
-  Далее в конец того же файла добавьте следующие строки(как показано в выше выложенном конфиге), которые создадут новое правило переадресации и загрузят модуль MySQL:
-  
-  # Load the MySQL Module
-  module(load="ommysql")
-  
-  #*.* :ommysql:127.0.0.1,Syslog_Database,syslog_user,password
-  *.* :ommysql:127.0.0.1,Syslog,rsyslog,Password
-  ------------
-  После редактирования файла rsyslog.conf, также выполните команду для перезагрузки сервиса Rsyslog.
-  ------------
-  systemctl restart rsyslog |#|#| Команда для перезагрузки утилиты сервиса Rsyslog
-  ------------
-  Если выполнили все правильно, то никаких ошибок при перезагрузке или последующем запуске службы возникнуть не должно. Также можно проверить состояние службы.
-  ------------
-  systemctl status rsyslog |#|#| Команда проверки статуса службы Rsyslog
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  6) Загрузка, установка и настройка ПО LogAnalyzer.
-  ------------
-  Превым этапом нужно скачать установочный архив с ПО LogAnalyzer.
-  ------------
-  cd /tmp |#|#| Команда для перехода в папку tmp 
-  ------------
-  wget http://download.adiscon.com/loganalyzer/loganalyzer-4.1.10.tar.gz |#|#| Команда для загрузки архива с ПО LogAnalyzer
-  ------------
-  tar -xzvf loganalyzer-4.1.10.tar.gz |#|#| Команда разархивации архива с ПО LogAnalizer
-  ------------
-  mkdir /var/www/html/loganalyzer |#|#| Команда для создания каталога "loganalyzer" в веб-каталоге apache
-  ------------
-  cp -r /tmp/loganalyzer-4.1.10/src/* /var/www/html/loganalyzer     |#|#| 
-                                                                    |#|#| - Команды для копирования установочных файлов в каталог "loganalyzer"
-  cp -r /tmp/loganalyzer-4.1.10/contrib/* /var/www/html/loganalyzer |#|#| 
-  ------------
-  cd /var/www/html/loganalyzer |#|#| Команда перехода в каталог "loganalyzer"
-  ------------
-  touch config.php |#|#| Команда для создания файла "config.php"
-  ------------
-  chown apache:apache config.php |#|#| Данной командой изменим владельца и группу у файла "config.php" на apache:apache
-  ------------
-  chmod 777 config.php |#|#| Данной командой выдадим файлу "config.php" права на чтение, запись и выполнение
-  ------------
-  chcon -h -t httpd_sys_script_rw_t /var/www/html/loganalyzer/config.php |#|#| Данной командой изменим контекст файла "config.php"
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  7) Запуск Web-установщика LogAnalyzer и подключение к базе данных.
-  ------------
-  Для последующей настройки LogAnalyzer, нужно перейти по следующему адресу: http://localhost/loganalyzer
-  Если вы хотите производить дальнейшую настройку на другом АРМ/VM, то перейдите по следующему адресу: http://IP/loganalyzer Указав вместо "IP" адрес АРМ/VM, на которой развернута связка
-  rsyslog+LogAnalyzer+MySQL
-  ------------
-  Далее следуйте прописанным ниже шагам:
+1) Обновить пакеты ОС Linux CentOS 7 до последней версии;
+2) Прописать статические IP-адреса;
+3) Выключить систему принудительного контроля доступа SELinux;
+4) Установить необходимые пакеты/компоненты;
+5) Настроить базу данных(MySQL) для Rsyslog;
+6) Скачать и установить ПО LogAnalyzer;
+7) Запустить Web-установщик LogAnalyzer и подключить к созданной базе данных;
+8) Подключить сетевое устройство к Rsyslog;
+9) Подробнее о чистке базы данных LogAnalyzer.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Предисловие:
+------------
+LogAnalyzer - это программное обеспечение, устанавливаемое как правило на сервер, которое с определённой периодичностью собирает накопленные узлом журналы сервера, 
+обрабатывающее данные из них, хранящее извлечённые данные во внутреннем архиве или базе данных, и создающее страницы, показывающие статистическую информацию конечным пользователям.
+------------
+Rsyslog - это это программная утилита с открытым исходным кодом, используемая в UNIX и Unix-подобных компьютерных системах для пересылки сообщений журнала в сети.
+------------
+MySQL - это свободная реляционная система управления базами данных.
+------------
+MariaDB — это ответвление от системы управления базами данных MySQL, разрабатываемое сообществом под лицензией GNU GPL.
+------------
+NMTUI - это инструмент командной строки, который используется для настройки сети в системах Gnu/Linux. При запуске он вызывает графический текстовый интерфейс, который помогает 
+пользователям легко и эффективно настраивать сетевые интерфейсы.
+------------
+SELinux - это система принудительного контроля доступа, реализованная на уровне ядра.
+------------
+Nano - это консольный текстовый редактор для UNIX и Unix-подобных операционных систем, основанный на библиотеке curses и распространяемый под лицензией GNU GPL.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1) Перед началом выполнения каких-либо манипуляций по настройке связки Rsyslog+LogAnalyzer+MySQL, нужно выполнить подготовку ОС Linux CentOS 7. Для начала обновим пакеты системы.
+------------
+<a class="neonText2">yum update -y && yum upgrade -y</a> |#|#| Поиск и обновление пакетов системы
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2) Также для избежания потери связи с АРМ/VM, нужно позаботиться о статической IP-адресации. Её можно настроить как на самой АРМ/VM, так и на самом сетевом устройстве.
+Статическую адресацию можно прописать с помощью инструмента командной строки nmtui.
+------------
+<a class="neonText2">yum install -y NetworkManager-tui</a> |#|#| Установка пакета nmtui для настройки сети на АРМ/VM
+------------
+Гайд по тому, как пользоваться инструментом nmtui, вы можете посмотреть в интернете.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3) После настройки сети, нужно ОБЯЗАТЕЛЬНО отключить систему контроля доступа SELinux НАВСЕГДА. Если данную систему не выключить, то после настройки LogAnalyzer, в нём же у вас все время 
+будут сыпаться следующие ошибки:
 
-  1 - В высветившемня окошке с текстом, вы увидите слово "here" синего цвета, кликайте на него;
-  2 - Нажмите на кнопку "Next";
-  3 - Убедитесь в том, что файл "config.php" доступен для записи и нажмите кнопку "Next";
-  4 - Заполните данные базы данных для loganalyzer, указав имя базы данных: "Syslog", пользователя: "rsyslog" и пароль: "Password", созданные на последних шагах, и нажмите кнопку "Next";
-  5 - Нажмите на кнопку "Next";
-  6 - Нажмите на кнопку "Next";
-  7 - Создайте учётную запись администратора для LogAnalyzer;
-  8 - Заполните следующие строки:
-      Name of the Source: My Syslog Source
-      Source Type: MYSQL Native
-      Select View: Syslog Fields
-      Table type: MonitorWare
-      Database Host: localhost
-      Database Name: Syslog
-      Database Tablename: systemevents
-      Database User: rsyslog
-      Database Password: Password
-      Enable Row Counting: Yes
-      
-      Нажмите на кнопку "Next".
-  9 - Нажмите на кнопку "Finish!".
-  ------------
-  После проделанных действий, у вас появится окошко, где нужно будет произвести авторизацию. В нём укажите учетные данные, которые вы создали в шаге №7.
-  ------------
-  Если вы все сделали правильно, то после логирования у вас появится таблица с данными. Если же вы сделали что-то не так, то у вас после логирования появится ошибка.
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  8) Подключить к Rsyslog сетевое устройство.
-  ------------
-  На мой взгляд, нет ничего сложно при подключении сетевого устройства к Rsyslog. Если вы используете Web-интерфейс(в моём случае коммутатор ZyXel), то вам нужно перейти по пути:
-  "Management" > "Syslog Setup". После того, как вы провалитесь во вкладку "Syslog Setup", вам будет нужно заполнить/выполнить настройку во всех строках.
-  Опираясь на сетевое оборудование ZyXel, заполняются следующие строки:
+1) file './...]': open error: Permission denied [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2433 ]
+2) action 'action 7' resumed (module 'builtin:omfile') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]
+3) file './...]': open error: Permission denied [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2433 ]
+4) action 'action 8' resumed (module 'builtin:omfile') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]
+5) action 'action 9' resumed (module 'ommysql') [v8.24.0-57.el7_9.3 try http://www.rsyslog.com [More Information] /e/2359 ]
+------------
+<a class="neonText2">sestatus</a> |#|#| Команда для проверки статуса SELinux
+------------
+Откройте config-файл по пути: /etc/selinux/
+Для редактирования файла можно воспользоваться консольным текстовым редактором nano. По тому как им пользоваться, всю информацию можно найти в интернете.
+------------
+<a class="neonText2">nano /etc/selinux/config</a> |#|#| Команда для открытия и редактирования конфигурационного файла SELinux
+------------
+Конфигурационный файл SELinux должен выглядеть следующим образом:
+<a class="neonText2">
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#       enforcing - SELinux security policy is enforced.
+#       permissive - SELinux prints warnings instead of enforcing.
+#       disabled - No SELinux policy is loaded.
+SELINUX=disabled
+# SELINUXTYPE= can take one of these two values:
+#       targeted - Targeted processes are protected,
+#       mls - Multi Level Security protection.
+SELINUXTYPE=targeted</a>
+------------
+После внесённых изменений, сохраняем файл, выходим из консольного текстового редактора и отправляем АРМ/VM в перезагрузку
+------------
+<a class="neonText2">reboot</a> |#|#| Команда для перезагрузки АРМ/VM
+------------
+После перезагрузки вашего устройства, можете снова ввести команду "sestatus" и убедиться в том, что у вас отключена система SELinux.
+Вывод отключенной системы должен выглядеть вот так: 
 
-  1 - Syslog Activation; (выставляется галочка для активации)
-  2 - Logging type; (выставляется галочка для активации)
-  3 - Выбирается уровень передачи логов; (для того, чтобы передовалась вся та информация, которая пишется в логах на сетевом устройстве, выбирайте 7 уровень)
-  4 - Прописывается IP-адрес Syslog-сервера и рядом выставляется уровень логирования (всегда выбирайте "local use 0-7").
-  ------------
-  Вкратце об уровнях логирования(относится ко всем коммутаторам):
-          
-          0   Emergencies     Система не работоспособна
-          1   Alerts          Необходимо срочное вмешательство
-          2   Critical        Критические события
-          3   Errors          Сообщения о ошибках
-          4   Warning         Всевозможные предупреждения
-          5   Notifications   Различные важные уведомления
-          6   Informational   Информационные сообшения
-          7   Debugging       Отладочые сообщения
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  9) LogAnalyzer чистка базы данных.
-  ------------
-  cd /var/www/html/loganalyzer/cron/ |#|#| Команда для перехода в нужный каталог
-  ------------
-  php ./maintenance.php cleandata 1 olderthan 86400 |#|#| Команда для удаления старых записей старше 86400 сек (24 часов)
-  3600 - 1 час
-  86400 - 24 часа
-  864000 - 10дней 
-  2592000 - 30 дней
-  ------------
-  Если вам критично, то можете сделать скрипт для чистки базы данных LogAnalyzer-@ и добавить его в автовыполнение в планировщик задач Cron.
-  Скрипт будет выглядеть следующим образом:
-  ------------
-  #!/bin/bash
-  cd /var/www/html/loganalyzer/cron/
-  php ./maintenance.php cleandata 1 olderthan 86400
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  На этом интрукция завершена! Спасибо за внимание!) 
+SELinux status:                 disabled
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4) Установка и включение необходимых пакетов/компонентов.
+------------
+<a class="neonText2">yum install -y httpd php php-mysql wget mariadb-server rsyslog-mysql</a> |#|#| Команда для установки необходимых пакетов
+------------
+<a class="neonText2">systemctl enable httpd && systemctl start httpd</a> |#|#| Команда для включения сервиса httpd в автозагрузку и запуска сервиса httpd
+------------
+<a class="neonText2">systemctl enable mariadb && systemctl start mariadb</a> |#|#| Команда для включения сервиса mariadb в автозагрузку и запуска сервиса mariadb
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5) Настройка базы данных(MySQL) для Rsyslog.
+!!! Изначально, в базе данных MySQL, у пользователя root пароль не назначен. Поэтому, когда система попросит вас ввести пароль, просто нажмите Enter!!! 
+!!! Также, когда вы работаете в системе MariaDB, то после того, как вы полностью ввели команду, ОБЯЗАТЕЛЬНО нужно поставить в конце символ ";"!!!
+------------
+<a class="neonText2">mysql -u root -p < /usr/share/doc/rsyslog-8.24.0/mysql-createDB.sql</a> |#|#| Команда для импортации схемы базы данных Rsyslog, предложенной по умолчанию
+------------
+<a class="neonText2">mysql -u root -p</a> |#|#| Команда подключения к системе MariaDB, для управления базами данных MySQL
+------------
+<a class="neonText2">RANT ALL ON Syslog.* TO 'rsyslog'@'localhost' IDENTIFIED BY 'Password';</a> |#|#| Команда создания пользователя "Rsyslog" с паролем "Password" для доступа к базе данных Syslog. Пароль
+можете придумать свой.
+------------
+<a class="neonText2">FLUSH PRIVILEGES;</a> |#|#| Команда для того, чтобы задать привилегии пользователя путем непосредственного внесения изменений в таблицы назначения привилегий
+------------
+<a class="neonText2">exit</a> |#|#| Команда выхода из системы MariaDB
+------------
+<a class="neonText2">cp /etc/rsyslog.conf /etc/rsyslog.conf.org</a> |#|#| Данной командой сделайте копию файла rsyslog.conf и поменяйте ему название на rsyslog.conf.org
+------------
+Далее откройте файл rsyslog.conf в текстовом редакторе и раскомментируйте следующие строки:
+<a class="neonText2">  
+$ModLoad imudp
+$UDPServerRun 514
+
+$ModLoad imtcp
+$InputTCPServerRun 514</a>
+------------
+На всякий случай выложу конфиг файла rsyslog.conf:
+<a class="neonText2">
+# rsyslog configuration file
+
+# For more information see /usr/share/doc/rsyslog-*/rsyslog_conf.html
+# If you experience problems, see http://www.rsyslog.com/doc/troubleshoot.html
+
+#### MODULES ####
+
+# The imjournal module bellow is now used as a message source instead of imuxsock.
+$ModLoad imuxsock # provides support for local system logging (e.g. via logger command)
+$ModLoad imjournal # provides access to the systemd journal
+#$ModLoad imklog # reads kernel messages (the same are read from journald)
+#$ModLoad immark  # provides --MARK-- message capability
+
+# Provides UDP syslog reception
+$ModLoad imudp
+$UDPServerRun 514
+
+# Provides TCP syslog reception
+$ModLoad imtcp
+$InputTCPServerRun 514
+
+
+#### GLOBAL DIRECTIVES ####
+
+# Where to place auxiliary files
+$WorkDirectory /var/lib/rsyslog
+
+# Use default timestamp format
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+
+# File syncing capability is disabled by default. This feature is usually not required,
+# not useful and an extreme performance hit
+#$ActionFileEnableSync on
+
+# Include all config files in /etc/rsyslog.d/
+$IncludeConfig /etc/rsyslog.d/*.conf
+
+# Turn off message reception via local log socket;
+# local messages are retrieved through imjournal now.
+$OmitLocalLogging on
+
+# File to store the position in the journal
+$IMJournalStateFile imjournal.state
+
+
+#### RULES ####
+
+# Log all kernel messages to the console.
+# Logging much else clutters up the screen.
+#kern.*                                                 /dev/console
+
+# Log anything (except mail) of level info or higher.
+# Don't log private authentication messages!
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages
+
+# The authpriv file has restricted access.
+authpriv.*                                              /var/log/secure
+
+# Log all the mail messages in one place.
+mail.*                                                  -/var/log/maillog
+
+
+# Log cron stuff
+cron.*                                                  /var/log/cron
+
+# Everybody gets emergency messages
+*.emerg                                                 :omusrmsg:*
+
+# Save news errors of level crit and higher in a special file.
+uucp,news.crit                                          /var/log/spooler
+
+# Save boot messages also to boot.log
+local7.*                                                /var/log/boot.log
+
+
+# ### begin forwarding rule ###
+# The statement between the begin ... end define a SINGLE forwarding
+# rule. They belong together, do NOT split them. If you create multiple
+# forwarding rules, duplicate the whole block!
+# Remote Logging (we use TCP for reliable delivery)
+#
+# An on-disk queue is created for this action. If the remote host is
+# down, messages are spooled to disk and sent when it is up again.
+#$ActionQueueFileName fwdRule1 # unique name prefix for spool files
+#$ActionQueueMaxDiskSpace 1g   # 1gb space limit (use as much as possible)
+#$ActionQueueSaveOnShutdown on # save messages to disk on shutdown
+#$ActionQueueType LinkedList   # run asynchronously
+#$ActionResumeRetryCount -1    # infinite retries if host is down
+# remote host is: name/ip:port, e.g. 192.168.0.1:514, port optional
+#*.* @@remote-host:514
+# ### end of the forwarding rule ###
+
+#[...]
+# Load the MySQL Module
+module(load="ommysql")
+#[...]
+#*.* :ommysql:127.0.0.1,Syslog_Database,syslog_user,password
+*.* :ommysql:127.0.0.1,Syslog,rsyslog,Password
+
+$template RemoteLogs,"/var/log/rsyslog/%HOSTNAME%/%PROGRAMNAME%.log"
+*.* ?RemoteLogs
+& ~</a>
+------------
+Далее в конец того же файла добавьте следующие строки(как показано в выше выложенном конфиге), которые создадут новое правило переадресации и загрузят модуль MySQL:
+<a class="neonText2">
+# Load the MySQL Module
+module(load="ommysql")
+
+#*.* :ommysql:127.0.0.1,Syslog_Database,syslog_user,password
+*.* :ommysql:127.0.0.1,Syslog,rsyslog,Password</a>
+------------
+После редактирования файла rsyslog.conf, также выполните команду для перезагрузки сервиса Rsyslog.
+------------
+<a class="neonText2">systemctl restart rsyslog</a> |#|#| Команда для перезагрузки утилиты сервиса Rsyslog
+------------
+Если выполнили все правильно, то никаких ошибок при перезагрузке или последующем запуске службы возникнуть не должно. Также можно проверить состояние службы.
+------------
+<a class="neonText2">systemctl status rsyslog</a> |#|#| Команда проверки статуса службы Rsyslog
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6) Загрузка, установка и настройка ПО LogAnalyzer.
+------------
+Превым этапом нужно скачать установочный архив с ПО LogAnalyzer.
+------------
+<a class="neonText2">cd /tmp</a> |#|#| Команда для перехода в папку tmp 
+------------
+<a class="neonText2">wget http://download.adiscon.com/loganalyzer/loganalyzer-4.1.10.tar.gz</a> |#|#| Команда для загрузки архива с ПО LogAnalyzer
+------------
+<a class="neonText2">tar -xzvf loganalyzer-4.1.10.tar.gz</a> |#|#| Команда разархивации архива с ПО LogAnalizer
+------------
+<a class="neonText2">mkdir /var/www/html/loganalyzer</a> |#|#| Команда для создания каталога "loganalyzer" в веб-каталоге apache
+------------
+<a class="neonText2">cp -r /tmp/loganalyzer-4.1.10/src/* /var/www/html/loganalyzer</a>     |#|#| 
+                                                                  |#|#| - Команды для копирования установочных файлов в каталог "loganalyzer"
+<a class="neonText2">cp -r /tmp/loganalyzer-4.1.10/contrib/* /var/www/html/loganalyzer</a> |#|#| 
+------------
+<a class="neonText2">cd /var/www/html/loganalyzer</a> |#|#| Команда перехода в каталог "loganalyzer"
+------------
+<a class="neonText2">touch config.php</a> |#|#| Команда для создания файла "config.php"
+------------
+<a class="neonText2">chown apache:apache config.php</a> |#|#| Данной командой изменим владельца и группу у файла "config.php" на apache:apache
+------------
+<a class="neonText2">chmod 777 config.php</a> |#|#| Данной командой выдадим файлу "config.php" права на чтение, запись и выполнение
+------------
+<a class="neonText2">chcon -h -t httpd_sys_script_rw_t /var/www/html/loganalyzer/config.php</a> |#|#| Данной командой изменим контекст файла "config.php"
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7) Запуск Web-установщика LogAnalyzer и подключение к базе данных.
+------------
+Для последующей настройки LogAnalyzer, нужно перейти по следующему адресу: http://localhost/loganalyzer
+Если вы хотите производить дальнейшую настройку на другом АРМ/VM, то перейдите по следующему адресу: http://IP/loganalyzer Указав вместо "IP" адрес АРМ/VM, на которой развернута связка
+rsyslog+LogAnalyzer+MySQL
+------------
+Далее следуйте прописанным ниже шагам:
+
+1 - В высветившемня окошке с текстом, вы увидите слово "here" синего цвета, кликайте на него;
+2 - Нажмите на кнопку "Next";
+3 - Убедитесь в том, что файл "config.php" доступен для записи и нажмите кнопку "Next";
+4 - Заполните данные базы данных для loganalyzer, указав имя базы данных: "Syslog", пользователя: "rsyslog" и пароль: "Password", созданные на последних шагах, и нажмите кнопку "Next";
+5 - Нажмите на кнопку "Next";
+6 - Нажмите на кнопку "Next";
+7 - Создайте учётную запись администратора для LogAnalyzer;
+8 - Заполните следующие строки:
+    Name of the Source: My Syslog Source
+    Source Type: MYSQL Native
+    Select View: Syslog Fields
+    Table type: MonitorWare
+    Database Host: localhost
+    Database Name: Syslog
+    Database Tablename: systemevents
+    Database User: rsyslog
+    Database Password: Password
+    Enable Row Counting: Yes
+    
+    Нажмите на кнопку "Next".
+9 - Нажмите на кнопку "Finish!".
+------------
+После проделанных действий, у вас появится окошко, где нужно будет произвести авторизацию. В нём укажите учетные данные, которые вы создали в шаге №7.
+------------
+Если вы все сделали правильно, то после логирования у вас появится таблица с данными. Если же вы сделали что-то не так, то у вас после логирования появится ошибка.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+8) Подключить к Rsyslog сетевое устройство.
+------------
+На мой взгляд, нет ничего сложно при подключении сетевого устройства к Rsyslog. Если вы используете Web-интерфейс(в моём случае коммутатор ZyXel), то вам нужно перейти по пути:
+"Management" > "Syslog Setup". После того, как вы провалитесь во вкладку "Syslog Setup", вам будет нужно заполнить/выполнить настройку во всех строках.
+Опираясь на сетевое оборудование ZyXel, заполняются следующие строки:
+
+1 - Syslog Activation; (выставляется галочка для активации)
+2 - Logging type; (выставляется галочка для активации)
+3 - Выбирается уровень передачи логов; (для того, чтобы передовалась вся та информация, которая пишется в логах на сетевом устройстве, выбирайте 7 уровень)
+4 - Прописывается IP-адрес Syslog-сервера и рядом выставляется уровень логирования (всегда выбирайте "local use 0-7").
+------------
+Вкратце об уровнях логирования(относится ко всем коммутаторам):
+        
+        0   Emergencies     Система не работоспособна
+        1   Alerts          Необходимо срочное вмешательство
+        2   Critical        Критические события
+        3   Errors          Сообщения о ошибках
+        4   Warning         Всевозможные предупреждения
+        5   Notifications   Различные важные уведомления
+        6   Informational   Информационные сообшения
+        7   Debugging       Отладочые сообщения
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+9) LogAnalyzer чистка базы данных.
+------------
+<a class="neonText2">cd /var/www/html/loganalyzer/cron/</a> |#|#| Команда для перехода в нужный каталог
+------------
+<a class="neonText2">php ./maintenance.php cleandata 1 olderthan 86400</a> |#|#| Команда для удаления старых записей старше 86400 сек (24 часов)
+3600 - 1 час
+86400 - 24 часа
+864000 - 10дней 
+2592000 - 30 дней
+------------
+Если вам критично, то можете сделать скрипт для чистки базы данных LogAnalyzer-@ и добавить его в автовыполнение в планировщик задач Cron.
+Скрипт будет выглядеть следующим образом:
+<a class="neonText2">
+#!/bin/bash
+cd /var/www/html/loganalyzer/cron/
+php ./maintenance.php cleandata 1 olderthan 86400</a>
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+На этом интрукция завершена! Спасибо за внимание!) 
 </p>
 </div>
