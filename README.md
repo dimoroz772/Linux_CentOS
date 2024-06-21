@@ -26,4 +26,6 @@
   <br/>
 <i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/Website/Installing_Zabbix_plugin_in_Grafana"><b>Installing Zabbix plugin in Grafana</b></a><br/><i/>
   <br/>
-<i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/Website/Install_GLPI_10.0.6%2BPlugins"><b>Install_GLPI_10.0.6+Plugins</b></a><br/><i/>
+<i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/Website/Install_GLPI_10.0.6%2BPlugins"><b>Install GLPI 10.0.6 + Plugins</b></a><br/><i/>
+  <br/>
+<i> <a href="https://github.com/dimoroz772/Linux_CentOS/blob/Website/Transferring_DB_from_Zabbix_7.0.0beta1_to_Zabbix_7.0_LTS"><b>Transferring DB from Zabbix 7.0.0beta1 to Zabbix 7.0 LTS</b></a><br/><i/>
