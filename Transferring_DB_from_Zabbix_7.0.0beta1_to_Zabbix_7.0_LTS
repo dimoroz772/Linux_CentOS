@@ -40,7 +40,7 @@ systemctl stop zabbix-server zabbix-agent |#|#| Команда для остан
 ------------
 После чего нужно выполнить backup БД.
 ------------
-/usr/bin/mysqldump --opt -v --databases zabbix -uzabbix -p'zabbixpassword' | /usr/bin/gzip -c > ~/ |#|#| Команда для выполнения РК БД Zabbix в MySQL
+/usr/bin/mysqldump --opt -v --databases zabbix -uzabbix -p'zabbixpassword' | /usr/bin/gzip -c > ~/zabbix.sql.gz |#|#| Команда для выполнения РК БД Zabbix в MySQL
 ------------
 sudo -u postgres pg_dump -U postgres zabbix | /usr/bin/gzip > ~/zabbix.sql.gz |#|#| Команда для выполнения РК БД Zabbix в PostgreSQL
 ------------
