@@ -102,7 +102,7 @@ snapshot-а, т.к. у вас в сети сразу же возникнет к�
 ------------
 После чего нужно выполнить backup БД.
 ------------
-<a class="neonText2">/usr/bin/mysqldump --opt -v --databases zabbix -uzabbix -p'zabbixpassword' | /usr/bin/gzip -c > ~/</a> |#|#| Команда для выполнения РК БД Zabbix в MySQL
+<a class="neonText2">/usr/bin/mysqldump --opt -v --databases zabbix -uzabbix -p'zabbixpassword' | /usr/bin/gzip -c > ~/zabbix.sql.gz</a> |#|#| Команда для выполнения РК БД Zabbix в MySQL
 ------------
 <a class="neonText2">sudo -u postgres pg_dump -U postgres zabbix | /usr/bin/gzip > ~/zabbix.sql.gz</a> |#|#| Команда для выполнения РК БД Zabbix в PostgreSQL
 ------------
